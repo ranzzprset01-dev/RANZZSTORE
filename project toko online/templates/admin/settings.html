@@ -1,0 +1,68 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}Pengaturan Butik & Profil — Admin Suite{% endblock %}
+{% block header_title %}Pengaturan Toko & Informasi Butik{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-4xl space-y-6">
+    
+    <div class="glass-panel-gold rounded-3xl p-8 border border-[#c5a059]/40 shadow-2xl space-y-6">
+        
+        <div class="pb-4 border-b border-zinc-800">
+            <h2 class="font-serif text-lg font-bold text-zinc-100">Profil & Konfigurasi Resmi Toko</h2>
+            <p class="text-xs text-zinc-400">Informasi ini akan tercetak otomatis pada faktur invoice, header, serta halaman pelacakan pesanan pelanggan.</p>
+        </div>
+
+        <form action="{{ url_for('admin_settings') }}" method="POST" class="space-y-5 text-xs">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                    <label class="block text-zinc-400 mb-1 font-medium">Nama Brand Toko Online *</label>
+                    <input type="text" name="store_name" required value="{{ settings.get('store_name', 'Ranzzstore') }}" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+                <div>
+                    <label class="block text-zinc-400 mb-1 font-medium">Slogan / Tagline Mewah *</label>
+                    <input type="text" name="store_tagline" required value="{{ settings.get('store_tagline', 'Modern Luxury & Premium Lifestyle') }}" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                    <label class="block text-zinc-400 mb-1 font-medium">Nomor WhatsApp / Layanan Telepon Concierge *</label>
+                    <input type="text" name="store_phone" required value="{{ settings.get('store_phone', '+62 812-8888-7799') }}" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+                <div>
+                    <label class="block text-zinc-400 mb-1 font-medium">Email Resmi Butik *</label>
+                    <input type="email" name="store_email" required value="{{ settings.get('store_email', 'concierge@ranzzstore.com') }}" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-zinc-400 mb-1 font-medium">Alamat Lengkap Kantor Butik Fisik *</label>
+                <textarea name="store_address" rows="3" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">{{ settings.get('store_address', 'Senopati Suites Tower 2, Penthouse Level, Kebayoran Baru, Jakarta') }}</textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                    <label class="block text-zinc-400 mb-1 font-medium">Tarif Pajak PPN (%)</label>
+                    <input type="number" name="tax_rate" value="{{ settings.get('tax_rate', '11') }}" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+                <div>
+                    <label class="block text-zinc-400 mb-1 font-medium">Mata Uang Utama</label>
+                    <input type="text" disabled value="IDR (Rupiah Indonesia)" class="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-500 cursor-not-allowed">
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-zinc-800 flex justify-end">
+                <button type="submit" class="px-8 py-3 rounded-xl btn-gold font-bold uppercase tracking-wider flex items-center gap-2 shadow-xl">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    <span>Simpan Pengaturan Toko</span>
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+{% endblock %}

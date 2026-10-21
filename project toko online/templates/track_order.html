@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block title %}Pelacak Pesanan & Resi Pengiriman — RANZZSTORE{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+    
+    <div class="text-center space-y-3 mb-10">
+        <div class="w-12 h-12 rounded-full border border-[#c5a059] flex items-center justify-center mx-auto bg-zinc-900 text-[#c5a059]">
+            <i data-lucide="truck" class="w-6 h-6"></i>
+        </div>
+        <span class="text-xs uppercase tracking-[0.25em] text-[#c5a059] font-bold">Layanan Pelacakan Brankas</span>
+        <h1 class="font-serif text-3xl sm:text-4xl font-bold text-zinc-100">Lacak Pengiriman Pesanan</h1>
+        <p class="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
+            Pantau status kriya pesanan Anda secara waktu nyata sejak keluar dari brankas butik hingga tiba di kediaman Anda.
+        </p>
+    </div>
+
+    <!-- Tracking Search Form -->
+    <div class="glass-panel-gold rounded-2xl p-6 sm:p-8 mb-10 shadow-2xl">
+        <form action="{{ url_for('track_order') }}" method="GET" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <input type="text" name="order_number" value="{{ search_query }}" required placeholder="Ketik Nomor Pesanan (misal: ORD-20261020-001) atau Nomor Resi..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl pl-10 pr-4 py-3.5 text-xs text-zinc-100 focus:outline-none focus:border-[#c5a059] uppercase tracking-wider">
+                <i data-lucide="search" class="w-4 h-4 text-zinc-400 absolute left-3.5 top-4"></i>
+            </div>
+            <button type="submit" class="px-8 py-3.5 rounded-xl btn-gold text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 whitespace-nowrap">
+                <i data-lucide="compass" class="w-4 h-4"></i>
+                <span>Lacak Sekarang</span>
+            </button>
+        </form>
+
+        <div class="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-zinc-400">
+            <span>Contoh nomor untuk Anda uji:</span>
+            <a href="{{ url_for('track_order', order_number='ORD-20261020-001') }}" class="px-2 py-0.5 rounded bg-zinc-800 text-[#c5a059] hover:underline font-mono">ORD-20261020-001</a>
+            <a href="{{ url_for('track_order', order_number='ORD-20261021-002') }}" class="px-2 py-0.5 rounded bg-zinc-800 text-[#c5a059] hover:underline font-mono">ORD-20261021-002</a>
+        </div>
+    </div>
+
+    {% if order %}
+    <!-- ORDER TRACKING RESULT TIMELINE -->
+    <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-zinc-800 space-y-8 animate-fade-in shadow-2xl">
+        
+        <!-- Status Header Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-zinc-800 gap-4">
+            <div>
+                <span class="text-[10px] uppercase tracking-widest text-[#c5a059] font-bold">Rincian Pengiriman</span>
+                <h3 class="font-serif text-2xl font-bold text-zinc-100 mt-0.5">{{ order.order_number }}</h3>
+                <p class="text-xs text-zinc-400 mt-1">Dipesan pada: {{ order.created_at }}</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{{ url_for('view_invoice', order_number=order.order_number) }}" target="_blank" class="px-4 py-2 rounded-xl btn-outline-gold text-xs font-semibold uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                    <span>Cetak Invoice</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Interactive 5-Step Visual Progress Bar -->
+        {% set status_step = 1 %}
+        {% if order.order_status == 'cancelled' %}
+            {% set status_step = -1 %}
+        {% elif order.order_status == 'pending' %}
+            {% set status_step = 1 %}
+        {% elif order.order_status == 'processing' %}
+            {% set status_step = 3 %}
+        {% elif order.order_status == 'shipped' %}
+            {% set status_step = 4 %}
+        {% elif order.order_status == 'completed' %}
+            {% set status_step = 5 %}
+        {% endif %}
+
+        {% if status_step == -1 %}
+        <div class="p-4 rounded-xl bg-rose-950/40 border border-rose-800 text-xs text-rose-300 flex items-center gap-3">
+            <i data-lucide="alert-octagon" class="w-5 h-5 text-rose-400"></i>
+            <span>Pesanan ini telah dibatalkan. Silakan hubungi pramutamu kami bila ada pertanyaan.</span>
+        </div>
+        {% else %}
+        <div>
+            <div class="relative flex items-center justify-between mb-2">
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-zinc-800 z-0"></div>
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-[#c5a059] to-emerald-400 z-0 transition-all duration-700" 
+                     style="width: {% if status_step == 1 %}15%{% elif status_step == 3 %}55%{% elif status_step == 4 %}80%{% else %}100%{% endif %};"></div>
+
+                <!-- Step 1: Pesanan Dibuat -->
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold {% if status_step >= 1 %}bg-[#c5a059] text-black shadow-[0_0_15px_rgba(197,160,89,0.5)]{% else %}bg-zinc-800 text-zinc-400{% endif %}">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-[10px] uppercase font-semibold mt-2 text-zinc-300">Dibuat</span>
+                </div>
+
+                <!-- Step 2: Pembayaran -->
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold {% if order.payment_status == 'paid' or status_step >= 3 %}bg-[#c5a059] text-black shadow-[0_0_15px_rgba(197,160,89,0.5)]{% else %}bg-zinc-800 text-zinc-400{% endif %}">
+                        <i data-lucide="credit-card" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-[10px] uppercase font-semibold mt-2 {% if order.payment_status == 'paid' or status_step >= 3 %}text-zinc-300{% else %}text-zinc-500{% endif %}">Dibayar</span>
+                </div>
+
+                <!-- Step 3: Dikemas -->
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold {% if status_step >= 3 %}bg-[#c5a059] text-black shadow-[0_0_15px_rgba(197,160,89,0.5)]{% else %}bg-zinc-800 text-zinc-400{% endif %}">
+                        <i data-lucide="package" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-[10px] uppercase font-semibold mt-2 {% if status_step >= 3 %}text-zinc-300{% else %}text-zinc-500{% endif %}">Dikemas</span>
+                </div>
+
+                <!-- Step 4: Dikirim -->
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold {% if status_step >= 4 %}bg-[#c5a059] text-black shadow-[0_0_15px_rgba(197,160,89,0.5)]{% else %}bg-zinc-800 text-zinc-400{% endif %}">
+                        <i data-lucide="truck" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-[10px] uppercase font-semibold mt-2 {% if status_step >= 4 %}text-zinc-300{% else %}text-zinc-500{% endif %}">Dikirim</span>
+                </div>
+
+                <!-- Step 5: Selesai -->
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold {% if status_step >= 5 %}bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.5)]{% else %}bg-zinc-800 text-zinc-400{% endif %}">
+                        <i data-lucide="award" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-[10px] uppercase font-semibold mt-2 {% if status_step >= 5 %}text-emerald-400{% else %}text-zinc-500{% endif %}">Selesai</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Courier & Waybill Info Card -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+            
+            <div class="p-5 rounded-2xl bg-zinc-900/80 border border-zinc-800 space-y-3">
+                <span class="text-[10px] uppercase tracking-wider text-[#c5a059] font-bold">Informasi Ekspedisi</span>
+                <p class="text-xs text-zinc-300 font-semibold flex items-center gap-2">
+                    <i data-lucide="send" class="w-4 h-4 text-[#c5a059]"></i>
+                    <span>{{ order.shipping_courier }}</span>
+                </p>
+
+                <div class="pt-2 border-t border-zinc-800/80">
+                    <p class="text-[11px] text-zinc-400">Nomor Resi / AWB:</p>
+                    {% if order.tracking_number %}
+                    <div class="flex items-center gap-3 mt-1">
+                        <span class="font-mono text-sm font-bold text-zinc-100 tracking-wider bg-black/60 px-3 py-1.5 rounded-lg border border-zinc-700">{{ order.tracking_number }}</span>
+                        <button onclick="navigator.clipboard.writeText('{{ order.tracking_number }}'); showToast('Nomor Resi disalin!', 'success')" class="p-2 text-zinc-400 hover:text-[#c5a059] transition" title="Salin Resi">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    {% else %}
+                    <p class="text-xs text-amber-400 mt-1 italic">Nomor resi sedang diproses oleh kurir brankas butik.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-zinc-900/80 border border-zinc-800 space-y-2 text-xs">
+                <span class="text-[10px] uppercase tracking-wider text-[#c5a059] font-bold">Tujuan Pengiriman</span>
+                <p class="font-semibold text-zinc-200">{{ order.customer_name }} ({{ order.customer_phone }})</p>
+                <p class="text-zinc-400 leading-relaxed">{{ order.shipping_address }}, {{ order.shipping_city }} {{ order.shipping_postal_code }}</p>
+                <p class="text-zinc-500 pt-2 border-t border-zinc-800/80">Metode Bayar: <strong class="text-zinc-300">{{ order.payment_method }}</strong></p>
+            </div>
+
+        </div>
+
+        <!-- Items in Shipment -->
+        <div class="space-y-3 pt-4 border-t border-zinc-800">
+            <h4 class="font-serif text-sm font-bold text-zinc-200 uppercase tracking-wider">Isi Paket Pengiriman</h4>
+            <div class="space-y-2">
+                {% for it in items %}
+                <div class="flex items-center justify-between p-3 rounded-xl bg-zinc-900/40 border border-zinc-800/60 text-xs">
+                    <div class="flex items-center gap-3">
+                        <img src="{{ it.image_url }}" alt="{{ it.product_name }}" class="w-10 h-10 object-cover rounded-lg border border-zinc-800">
+                        <div>
+                            <p class="font-medium text-zinc-200">{{ it.product_name }}</p>
+                            {% if it.selected_variant %}
+                            <p class="text-[10px] text-[#c5a059]">{{ it.selected_variant }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <span class="text-zinc-400 font-mono">{{ it.quantity }} unit</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

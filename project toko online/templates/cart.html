@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Tas Belanja Anda — RANZZSTORE{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    
+    <div class="mb-8">
+        <h1 class="font-serif text-3xl font-bold text-zinc-100">Tas Belanja & Kurasi Anda</h1>
+        <p class="text-xs sm:text-sm text-zinc-400 mt-1">Periksa kembali item pilihan Anda sebelum melangkah ke proses checkout pribadi.</p>
+    </div>
+
+    {% if not cart_items %}
+    <div class="glass-panel text-center py-20 px-4 rounded-3xl border border-zinc-800 max-w-2xl mx-auto">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500">
+            <i data-lucide="shopping-bag" class="w-8 h-8"></i>
+        </div>
+        <h3 class="font-serif text-2xl font-bold text-zinc-200 mb-2">Tas Belanja Anda Masih Kosong</h3>
+        <p class="text-xs text-zinc-400 max-w-sm mx-auto mb-8">Setiap mahakarya menanti pemilik yang tepat. Temukan karya impian Anda sekarang.</p>
+        <a href="{{ url_for('shop') }}" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl btn-gold text-xs font-semibold uppercase tracking-wider shadow-xl">
+            <span>Mulai Menjelajahi Koleksi</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+    </div>
+    {% else %}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        
+        <!-- Cart Items List (2 Cols) -->
+        <div class="lg:col-span-2 space-y-4">
+            <div class="glass-panel rounded-2xl border border-zinc-800/80 p-5 divide-y divide-zinc-800/60">
+                {% for item in cart_items %}
+                <div class="cart-row-item py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                     data-image="{{ item.image_url }}"
+                     data-name="{{ item.name }}"
+                     data-price="{{ item.price | rupiah }}"
+                     data-qty="{{ item.quantity }}"
+                     data-variant="{{ item.variant }}"
+                     data-key="{{ item.key }}">
+                    
+                    <div class="flex items-center gap-4">
+                        <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-20 h-20 object-cover rounded-xl border border-zinc-800 bg-zinc-950 flex-shrink-0">
+                        <div>
+                            <a href="{{ url_for('product_detail', slug=item.slug) }}" class="font-serif text-sm font-semibold text-zinc-100 hover:text-[#c5a059] transition">
+                                {{ item.name }}
+                            </a>
+                            {% if item.variant %}
+                            <p class="text-xs text-[#c5a059] mt-0.5">Edisi: {{ item.variant }}</p>
+                            {% endif %}
+                            <p class="text-xs text-gold-gradient font-medium mt-1">{{ item.price | rupiah }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Quantity & Subtotal Controls -->
+                    <div class="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
+                        <div class="flex items-center border border-zinc-700 rounded-xl overflow-hidden bg-zinc-900">
+                            <button onclick="updateCartQuantity('{{ item.key }}', {{ item.quantity - 1 }})" class="w-8 h-8 flex items-center justify-center text-zinc-300 hover:bg-zinc-800 transition">
+                                <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <span class="w-10 text-center text-xs font-semibold text-zinc-100">{{ item.quantity }}</span>
+                            <button onclick="updateCartQuantity('{{ item.key }}', {{ item.quantity + 1 }})" class="w-8 h-8 flex items-center justify-center text-zinc-300 hover:bg-zinc-800 transition">
+                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+
+                        <div class="text-right min-w-[100px]">
+                            <p class="text-xs text-zinc-400">Total</p>
+                            <p class="text-sm font-bold text-zinc-100">{{ item.subtotal | rupiah }}</p>
+                        </div>
+
+                        <button onclick="removeCartItem('{{ item.key }}')" class="p-2 text-zinc-500 hover:text-rose-400 transition" title="Hapus item">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Promotion / Voucher Tool Section -->
+            <div class="glass-panel rounded-2xl border border-zinc-800/80 p-5">
+                <div class="flex items-center gap-2 mb-3 text-zinc-200">
+                    <i data-lucide="ticket-percent" class="w-4 h-4 text-[#c5a059]"></i>
+                    <h3 class="font-serif text-sm font-bold uppercase tracking-wider">Kupon & Voucher Kehormatan</h3>
+                </div>
+                
+                {% if voucher %}
+                <div class="flex items-center justify-between p-3 rounded-xl bg-[#c5a059]/10 border border-[#c5a059]/40 text-xs">
+                    <div class="flex items-center gap-2 text-[#c5a059]">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        <span>Voucher <strong>{{ voucher.code }}</strong> aktif! Hemat {{ discount_amount | rupiah }}</span>
+                    </div>
+                    <button onclick="removeVoucher()" class="text-rose-400 hover:underline">Lepas</button>
+                </div>
+                {% else %}
+                <div class="flex gap-2">
+                    <input type="text" id="voucher-input" placeholder="Masukkan kode kupon (misal: LUXE10)..." class="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059] uppercase">
+                    <button onclick="applyVoucher()" class="px-5 py-2.5 rounded-xl btn-gold text-xs font-semibold uppercase tracking-wider">
+                        Gunakan
+                    </button>
+                </div>
+                <div class="flex items-center gap-2 mt-2 text-[11px] text-zinc-400">
+                    <span>Coba kode resmi:</span>
+                    <button onclick="document.getElementById('voucher-input').value = 'LUXE10'; applyVoucher();" class="text-[#c5a059] underline font-mono">LUXE10</button>
+                    <span>|</span>
+                    <button onclick="document.getElementById('voucher-input').value = 'ELEGANT50K'; applyVoucher();" class="text-[#c5a059] underline font-mono">ELEGANT50K</button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Order Summary (1 Col) -->
+        <aside class="glass-panel-gold rounded-2xl p-6 space-y-5 sticky top-28">
+            <h3 class="font-serif text-base font-bold text-zinc-100 uppercase tracking-wider pb-3 border-b border-zinc-800">
+                Ringkasan Pesanan
+            </h3>
+
+            <div class="space-y-3 text-xs">
+                <div class="flex justify-between text-zinc-400">
+                    <span>Subtotal Produk</span>
+                    <span id="cart-summary-subtotal" class="text-zinc-200 font-semibold">{{ subtotal | rupiah }}</span>
+                </div>
+                
+                {% if discount_amount > 0 %}
+                <div class="flex justify-between text-rose-400">
+                    <span>Potongan Voucher ({{ voucher.code }})</span>
+                    <span>-{{ discount_amount | rupiah }}</span>
+                </div>
+                {% endif %}
+
+                <div class="flex justify-between text-zinc-400">
+                    <span>Perkiraan Asuransi & Kirim</span>
+                    <span class="text-zinc-400 italic">Dihitung saat checkout</span>
+                </div>
+
+                <div class="pt-4 border-t border-zinc-800 flex justify-between items-baseline">
+                    <span class="font-serif text-sm font-bold text-zinc-100">Total Sementara:</span>
+                    <span class="font-serif text-xl font-bold text-gold-gradient">{{ total | rupiah }}</span>
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <a href="{{ url_for('checkout') }}" class="w-full py-4 text-center text-xs font-bold uppercase tracking-[0.15em] rounded-xl btn-gold flex items-center justify-center gap-2 shadow-2xl">
+                    <span>Lanjut ke Checkout</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </a>
+            </div>
+
+            <div class="text-[11px] text-zinc-400 space-y-1.5 pt-2">
+                <p class="flex items-center gap-1.5"><i data-lucide="lock" class="w-3.5 h-3.5 text-[#c5a059]"></i> Checkout terenkripsi SSL 256-bit</p>
+                <p class="flex items-center gap-1.5"><i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-[#c5a059]"></i> Garansi pengembalian 14 hari</p>
+            </div>
+        </aside>
+
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

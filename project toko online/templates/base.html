@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ settings.get('store_name', 'Ranzzstore') }}{% endblock %} — Luxury & Haute Craftsmanship</title>
+    
+    <!-- Tailwind CSS CDN with configuration -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            50: '#faf7ef',
+                            100: '#f3edd7',
+                            200: '#e6d8ad',
+                            300: '#d7be7e',
+                            400: '#c5a059',
+                            500: '#b48a43',
+                            600: '#9b7036',
+                            700: '#7d552e',
+                            800: '#67442a',
+                            900: '#563825'
+                        },
+                        obsidian: {
+                            900: '#0b0d11',
+                            800: '#12151d',
+                            700: '#191e29',
+                            600: '#232a39'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'Georgia', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Custom Luxury CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-[#0b0d11] text-zinc-100 min-h-screen flex flex-col antialiased selection:bg-[#c5a059] selection:text-black">
+
+    <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-[#0b0d11] via-[#1c2230] to-[#0b0d11] border-b border-[#c5a059]/20 py-2 px-4 text-center text-xs tracking-widest uppercase text-zinc-300">
+        <span class="inline-flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#c5a059] animate-pulse"></span>
+            <span>✦ Pengiriman Mewah Bergaransi Resmi ke Seluruh Nusantara | Gunakan Voucher <strong>LUXE10</strong> untuk Diskon 10% ✦</span>
+        </span>
+    </div>
+
+    <!-- Luxury Navigation Header -->
+    <header class="sticky top-0 z-40 bg-[#0b0d11]/85 backdrop-blur-md border-b border-zinc-800/80 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                
+                <!-- Brand / Logo -->
+                <div class="flex items-center gap-3">
+                    <a href="{{ url_for('index') }}" class="group flex items-center gap-2">
+                        <div class="w-10 h-10 rounded-full border border-[#c5a059] flex items-center justify-center bg-zinc-950 group-hover:scale-105 transition-transform duration-300 shadow-[0_0_15px_rgba(197,160,89,0.25)]">
+                            <span class="font-serif text-[#c5a059] font-bold text-xl tracking-wider">R</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="font-serif text-xl sm:text-2xl font-bold tracking-[0.2em] text-zinc-100 group-hover:text-[#c5a059] transition-colors">RANZZSTORE</span>
+                            <span class="text-[9px] uppercase tracking-[0.35em] text-zinc-400 font-light">Exclusive Lifestyle</span>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Desktop Navigation Links -->
+                <nav class="hidden md:flex items-center gap-8 text-xs uppercase tracking-widest font-semibold text-zinc-300">
+                    <a href="{{ url_for('index') }}" class="hover:text-[#c5a059] transition-colors {% if request.endpoint == 'index' %}text-[#c5a059]{% endif %}">Beranda</a>
+                    <a href="{{ url_for('shop') }}" class="hover:text-[#c5a059] transition-colors {% if request.endpoint == 'shop' and not request.args.get('category') %}text-[#c5a059]{% endif %}">Katalog Mahakarya</a>
+                    
+                    <!-- Categories Dropdown -->
+                    <div class="relative group">
+                        <button class="flex items-center gap-1 hover:text-[#c5a059] transition-colors py-2">
+                            <span>Kategori</span>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform group-hover:rotate-180"></i>
+                        </button>
+                        <div class="absolute left-0 top-full mt-1 w-64 glass-panel-gold rounded-xl p-3 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            {% for cat in nav_categories %}
+                            <a href="{{ url_for('shop', category=cat.slug) }}" class="flex items-center justify-between p-2.5 rounded-lg hover:bg-zinc-800/60 text-zinc-300 hover:text-[#c5a059] text-xs font-normal normal-case transition">
+                                <span>{{ cat.name }}</span>
+                                <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-zinc-500"></i>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <a href="{{ url_for('track_order') }}" class="flex items-center gap-1.5 hover:text-[#c5a059] transition-colors {% if request.endpoint == 'track_order' %}text-[#c5a059]{% endif %}">
+                        <i data-lucide="truck" class="w-3.5 h-3.5 text-[#c5a059]"></i>
+                        <span>Lacak Pesanan</span>
+                    </a>
+
+                    <!-- Admin / Tools Quick Access -->
+                    <a href="{{ url_for('admin_dashboard') }}" class="flex items-center gap-1 text-[#c5a059] bg-[#c5a059]/10 border border-[#c5a059]/30 px-3 py-1.5 rounded-full hover:bg-[#c5a059]/20 transition">
+                        <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
+                        <span>Admin Suite & Tools</span>
+                    </a>
+                </nav>
+
+                <!-- Action Icons (Search, Wishlist, Account, Cart) -->
+                <div class="flex items-center gap-4 sm:gap-5">
+                    
+                    <!-- Search Trigger -->
+                    <form action="{{ url_for('shop') }}" method="GET" class="hidden lg:flex items-center relative">
+                        <input type="text" name="q" placeholder="Cari karya mewah..." 
+                               value="{{ request.args.get('q', '') }}"
+                               class="bg-zinc-900/80 border border-zinc-700/60 rounded-full pl-9 pr-4 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059] w-48 focus:w-64 transition-all duration-300 placeholder:text-zinc-500">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-zinc-400 absolute left-3 pointer-events-none"></i>
+                    </form>
+
+                    <!-- Wishlist Icon -->
+                    <a href="{{ url_for('wishlist') }}" title="Daftar Impian" class="relative p-2 text-zinc-300 hover:text-[#c5a059] transition">
+                        <i data-lucide="heart" class="w-5 h-5"></i>
+                        <span class="wishlist-badge hidden absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">0</span>
+                    </a>
+
+                    <!-- Cart Trigger Button -->
+                    <button onclick="toggleCartDrawer()" title="Tas Belanja" class="relative p-2 text-zinc-300 hover:text-[#c5a059] transition focus:outline-none">
+                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                        <span class="cart-badge {% if cart_count == 0 %}hidden{% endif %} absolute top-1 right-1 w-4 h-4 bg-[#c5a059] text-black text-[10px] font-bold rounded-full flex items-center justify-center">
+                            {{ cart_count }}
+                        </span>
+                    </button>
+
+                    <!-- User Account / Login -->
+                    {% if current_user %}
+                    <div class="relative group">
+                        <button class="flex items-center gap-2 p-1.5 rounded-full hover:bg-zinc-800 transition">
+                            <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-[#c5a059] to-[#f3e7c4] text-black font-bold text-xs flex items-center justify-center">
+                                {{ current_user.name[0] }}
+                            </div>
+                            <span class="hidden sm:inline text-xs font-medium text-zinc-300">{{ current_user.name.split(' ')[0] }}</span>
+                            <i data-lucide="chevron-down" class="w-3 h-3 text-zinc-500"></i>
+                        </button>
+                        <div class="absolute right-0 top-full mt-2 w-52 glass-panel-gold rounded-xl p-2 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <div class="px-3 py-2 border-b border-zinc-800">
+                                <p class="text-xs font-semibold text-zinc-100 truncate">{{ current_user.name }}</p>
+                                <p class="text-[10px] text-zinc-400 truncate">{{ current_user.email }}</p>
+                                <span class="inline-block mt-1 text-[9px] uppercase tracking-wider px-2 py-0.5 rounded bg-[#c5a059]/20 text-[#c5a059]">{{ current_user.role }}</span>
+                            </div>
+                            {% if current_user.role == 'admin' %}
+                            <a href="{{ url_for('admin_dashboard') }}" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-zinc-800 text-xs text-zinc-300 hover:text-[#c5a059] transition">
+                                <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard Admin
+                            </a>
+                            <a href="{{ url_for('admin_pos') }}" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-zinc-800 text-xs text-zinc-300 hover:text-[#c5a059] transition">
+                                <i data-lucide="printer" class="w-4 h-4"></i> Alat Kasir (POS)
+                            </a>
+                            {% endif %}
+                            <a href="{{ url_for('track_order') }}" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-zinc-800 text-xs text-zinc-300 hover:text-[#c5a059] transition">
+                                <i data-lucide="package" class="w-4 h-4"></i> Pesanan Saya
+                            </a>
+                            <a href="{{ url_for('logout') }}" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-rose-500/10 text-xs text-rose-400 transition mt-1 border-t border-zinc-800/80">
+                                <i data-lucide="log-out" class="w-4 h-4"></i> Keluar
+                            </a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider px-4 py-2 rounded-full border border-[#c5a059]/50 text-zinc-200 hover:bg-[#c5a059] hover:text-black transition duration-300">
+                        <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                        <span>Masuk</span>
+                    </a>
+                    {% endif %}
+
+                    <!-- Mobile Menu Button -->
+                    <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="md:hidden p-2 text-zinc-300 hover:text-[#c5a059]">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-zinc-800 bg-[#0b0d11]/95 px-4 pt-3 pb-6 space-y-3">
+            <form action="{{ url_for('shop') }}" method="GET" class="relative mb-4">
+                <input type="text" name="q" placeholder="Cari produk mewah..." class="w-full bg-zinc-900 border border-zinc-700 rounded-lg pl-9 pr-4 py-2 text-xs text-zinc-200">
+                <i data-lucide="search" class="w-4 h-4 text-zinc-400 absolute left-3 top-2.5"></i>
+            </form>
+            <a href="{{ url_for('index') }}" class="block text-sm py-2 text-zinc-300 hover:text-[#c5a059]">Beranda</a>
+            <a href="{{ url_for('shop') }}" class="block text-sm py-2 text-zinc-300 hover:text-[#c5a059]">Semua Koleksi</a>
+            <a href="{{ url_for('track_order') }}" class="block text-sm py-2 text-zinc-300 hover:text-[#c5a059]">Lacak Pesanan</a>
+            <a href="{{ url_for('admin_dashboard') }}" class="block text-sm py-2 text-[#c5a059] font-medium">Panel Admin & Tools</a>
+        </div>
+    </header>
+
+    <!-- Flash Messages Container -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="max-w-4xl mx-auto px-4 mt-4 w-full">
+          {% for category, message in messages %}
+            <div class="flex items-center justify-between p-4 mb-3 text-xs rounded-xl border {% if category == 'danger' %}bg-rose-950/40 border-rose-800/80 text-rose-200{% elif category == 'success' %}bg-emerald-950/40 border-emerald-800/80 text-emerald-200{% else %}bg-zinc-900 border-zinc-700 text-zinc-200{% endif %} animate-fade-in shadow-lg">
+              <div class="flex items-center gap-3">
+                <i data-lucide="{% if category == 'danger' %}alert-circle{% elif category == 'success' %}check-circle-2{% else %}info{% endif %}" class="w-5 h-5 flex-shrink-0"></i>
+                <span>{{ message }}</span>
+              </div>
+              <button onclick="this.parentElement.remove()" class="text-zinc-400 hover:text-white p-1">
+                <i data-lucide="x" class="w-4 h-4"></i>
+              </button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Main Content Slot -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Luxury Sliding Cart Drawer Component -->
+    <div id="cart-overlay" onclick="toggleCartDrawer()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden transition-opacity"></div>
+    <div id="cart-drawer" class="fixed top-0 right-0 bottom-0 w-full sm:w-[420px] bg-[#12151d] border-l border-zinc-800 shadow-2xl z-50 transform translate-x-full flex flex-col">
+        <!-- Drawer Header -->
+        <div class="p-5 border-b border-zinc-800 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i data-lucide="shopping-bag" class="w-5 h-5 text-[#c5a059]"></i>
+                <h3 class="font-serif text-lg font-bold text-zinc-100 tracking-wide">Tas Belanja Anda</h3>
+            </div>
+            <button onclick="toggleCartDrawer()" class="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Drawer Items List -->
+        <div id="drawer-cart-items" class="flex-1 overflow-y-auto p-5 space-y-4">
+            <!-- Dynamically populated by main.js loadDrawerCart() -->
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="p-5 border-t border-zinc-800 bg-[#0b0d11]/80 space-y-3">
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-zinc-400">Perkiraan Subtotal:</span>
+                <span id="drawer-subtotal" class="font-semibold text-lg text-gold-gradient">Rp 0</span>
+            </div>
+            <p class="text-[11px] text-zinc-500">Pajak & ongkos kirim dihitung saat proses checkout.</p>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <a href="{{ url_for('cart_page') }}" onclick="toggleCartDrawer()" class="w-full py-3 text-center text-xs uppercase font-semibold tracking-wider rounded-xl btn-outline-gold">
+                    Lihat Tas
+                </a>
+                <a href="{{ url_for('checkout') }}" class="w-full py-3 text-center text-xs uppercase font-semibold tracking-wider rounded-xl btn-gold shadow-lg">
+                    Checkout
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Luxury Footer -->
+    <footer class="bg-[#08090d] border-t border-zinc-800/80 text-zinc-400 pt-16 pb-12 mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+                
+                <!-- Col 1: Brand & Philosophy -->
+                <div class="space-y-4 md:col-span-1">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full border border-[#c5a059] flex items-center justify-center bg-black">
+                            <span class="font-serif text-[#c5a059] font-bold text-sm">R</span>
+                        </div>
+                        <span class="font-serif text-lg tracking-[0.2em] text-zinc-100 font-bold">RANZZSTORE</span>
+                    </div>
+                    <p class="text-xs text-zinc-400 leading-relaxed">
+                        Pemberhentian eksklusif bagi penikmat seni kriya horologi, kerajinan kulit murni, dan keharuman haute parfumerie dunia.
+                    </p>
+                    <div class="pt-2 flex items-center gap-3 text-zinc-400">
+                        <a href="#" class="p-2 bg-zinc-900 hover:text-[#c5a059] hover:bg-zinc-800 rounded-lg transition"><i data-lucide="instagram" class="w-4 h-4"></i></a>
+                        <a href="#" class="p-2 bg-zinc-900 hover:text-[#c5a059] hover:bg-zinc-800 rounded-lg transition"><i data-lucide="facebook" class="w-4 h-4"></i></a>
+                        <a href="#" class="p-2 bg-zinc-900 hover:text-[#c5a059] hover:bg-zinc-800 rounded-lg transition"><i data-lucide="message-circle" class="w-4 h-4"></i></a>
+                    </div>
+                </div>
+
+                <!-- Col 2: Navigasi Koleksi -->
+                <div>
+                    <h4 class="font-serif text-sm font-semibold tracking-wider text-zinc-200 uppercase mb-4">Koleksi Kurasi</h4>
+                    <ul class="space-y-2.5 text-xs">
+                        {% for cat in nav_categories %}
+                        <li>
+                            <a href="{{ url_for('shop', category=cat.slug) }}" class="hover:text-[#c5a059] transition">{{ cat.name }}</a>
+                        </li>
+                        {% endfor %}
+                        <li><a href="{{ url_for('shop') }}" class="hover:text-[#c5a059] transition">Semua Mahakarya</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Layanan & Alat Pintar -->
+                <div>
+                    <h4 class="font-serif text-sm font-semibold tracking-wider text-zinc-200 uppercase mb-4">Layanan & Tools</h4>
+                    <ul class="space-y-2.5 text-xs">
+                        <li><a href="{{ url_for('track_order') }}" class="hover:text-[#c5a059] transition flex items-center gap-1.5"><i data-lucide="truck" class="w-3.5 h-3.5 text-[#c5a059]"></i> Lacak Resi Pengiriman</a></li>
+                        <li><a href="{{ url_for('cart_page') }}" class="hover:text-[#c5a059] transition">Cek Voucher Diskon</a></li>
+                        <li><a href="{{ url_for('admin_pos') }}" class="hover:text-[#c5a059] transition flex items-center gap-1.5"><i data-lucide="printer" class="w-3.5 h-3.5 text-[#c5a059]"></i> Mesin Kasir POS Toko</a></li>
+                        <li><a href="{{ url_for('admin_dashboard') }}" class="hover:text-[#c5a059] transition">Dasbor Analitik Bisnis</a></li>
+                        <li><a href="#" class="hover:text-[#c5a059] transition">Panduan Keaslian Produk</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 4: Concierge & Butik -->
+                <div>
+                    <h4 class="font-serif text-sm font-semibold tracking-wider text-zinc-200 uppercase mb-4">Private Concierge</h4>
+                    <p class="text-xs text-zinc-400 mb-3">Layanan konsultasi pribadi dan pemesanan bespoke:</p>
+                    <div class="space-y-2 text-xs text-zinc-300">
+                        <p class="flex items-center gap-2"><i data-lucide="phone" class="w-3.5 h-3.5 text-[#c5a059]"></i> {{ settings.get('store_phone', '+62 812-8888-7799') }}</p>
+                        <p class="flex items-center gap-2"><i data-lucide="mail" class="w-3.5 h-3.5 text-[#c5a059]"></i> {{ settings.get('store_email', 'concierge@ranzzstore.com') }}</p>
+                        <p class="flex items-start gap-2 text-zinc-400 text-[11px]"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-[#c5a059] flex-shrink-0 mt-0.5"></i> {{ settings.get('store_address', 'SCBD Penthouse, Jakarta') }}</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom Copyright & Badges -->
+            <div class="pt-8 border-t border-zinc-800/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
+                <p>&copy; {{ now_year }} {{ settings.get('store_name', 'Ranzzstore') }} Hak Cipta Dilindungi Undang-Undang.</p>
+                <div class="flex items-center gap-4 text-zinc-400 text-[11px]">
+                    <span class="flex items-center gap-1"><i data-lucide="shield-check" class="w-4 h-4 text-[#c5a059]"></i> 100% Produk Asli</span>
+                    <span class="flex items-center gap-1"><i data-lucide="lock" class="w-4 h-4 text-[#c5a059]"></i> Transaksi Terenkripsi 256-bit</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Main JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

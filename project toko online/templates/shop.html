@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}Katalog Mahakarya & Koleksi Eksklusif — RANZZSTORE{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    
+    <!-- Breadcrumb & Header -->
+    <div class="mb-8">
+        <nav class="flex items-center gap-2 text-xs text-zinc-500 mb-3">
+            <a href="{{ url_for('index') }}" class="hover:text-[#c5a059] transition">Beranda</a>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            <span class="text-zinc-300">Katalog Mahakarya</span>
+            {% if current_category %}
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            <span class="text-[#c5a059] capitalize">{{ current_category }}</span>
+            {% endif %}
+        </nav>
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+                <h1 class="font-serif text-3xl sm:text-4xl font-bold text-zinc-100">Katalog Koleksi Mewah</h1>
+                <p class="text-xs sm:text-sm text-zinc-400 mt-1">Kurasi pilihan arloji, wewangian, dan karya kulit dengan kualitas terbaik.</p>
+            </div>
+            
+            <!-- Quick Category Pill Filter -->
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ url_for('shop') }}" class="px-3.5 py-1.5 text-xs rounded-full border transition {% if not current_category %}border-[#c5a059] bg-[#c5a059]/10 text-[#c5a059]{% else %}border-zinc-800 text-zinc-400 hover:border-zinc-700{% endif %}">
+                    Semua
+                </a>
+                {% for cat in categories %}
+                <a href="{{ url_for('shop', category=cat.slug) }}" class="px-3.5 py-1.5 text-xs rounded-full border transition {% if current_category == cat.slug %}border-[#c5a059] bg-[#c5a059]/10 text-[#c5a059]{% else %}border-zinc-800 text-zinc-400 hover:border-zinc-700{% endif %}">
+                    {{ cat.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Shop Layout (Sidebar Filters + Products Grid) -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        
+        <!-- Sidebar Filter Tools -->
+        <aside class="space-y-6">
+            <div class="glass-panel p-5 rounded-2xl border border-zinc-800/80 space-y-6">
+                
+                <div class="flex items-center justify-between pb-4 border-b border-zinc-800">
+                    <h3 class="font-serif text-sm font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="sliders-horizontal" class="w-4 h-4 text-[#c5a059]"></i>
+                        <span>Filter Produk</span>
+                    </h3>
+                    {% if current_category or search_query or min_price or max_price %}
+                    <a href="{{ url_for('shop') }}" class="text-[11px] text-rose-400 hover:underline">Reset</a>
+                    {% endif %}
+                </div>
+
+                <form action="{{ url_for('shop') }}" method="GET" class="space-y-5">
+                    {% if current_category %}
+                    <input type="hidden" name="category" value="{{ current_category }}">
+                    {% endif %}
+
+                    <!-- Search Input -->
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-300 mb-1.5">Kata Kunci</label>
+                        <div class="relative">
+                            <input type="text" name="q" value="{{ search_query }}" placeholder="Cari nama atau model..." class="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl pl-9 pr-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059]">
+                            <i data-lucide="search" class="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-2.5"></i>
+                        </div>
+                    </div>
+
+                    <!-- Price Filter -->
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-300 mb-2">Rentang Harga (Rp)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" name="min_price" value="{{ min_price if min_price else '' }}" placeholder="Min" class="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059]">
+                            <input type="number" name="max_price" value="{{ max_price if max_price else '' }}" placeholder="Maks" class="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059]">
+                        </div>
+                    </div>
+
+                    <!-- Sort Options -->
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-300 mb-1.5">Urutkan Berdasarkan</label>
+                        <select name="sort" class="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059]">
+                            <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Koleksi Terbaru</option>
+                            <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Harga: Rendah ke Tinggi</option>
+                            <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Harga: Tinggi ke Rendah</option>
+                            <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Rating Tertinggi</option>
+                            <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Paling Banyak Diulas</option>
+                        </select>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-full py-2.5 text-xs font-semibold uppercase tracking-wider rounded-xl btn-gold flex items-center justify-center gap-2">
+                        <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                        <span>Terapkan Filter</span>
+                    </button>
+                </form>
+
+            </div>
+
+            <!-- Privilege Service Card -->
+            <div class="p-5 rounded-2xl border border-zinc-800 bg-[#0e1117] space-y-3">
+                <div class="flex items-center gap-2 text-[#c5a059]">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    <h4 class="font-serif text-xs font-bold uppercase tracking-wider">Garansi Keaslian</h4>
+                </div>
+                <p class="text-[11px] text-zinc-400 leading-relaxed">
+                    Setiap unit melalui inspeksi mikroskopis ganda dan dilengkapi sertifikat bernomor seri resmi.
+                </p>
+            </div>
+        </aside>
+
+        <!-- Product Grid & Listing -->
+        <main class="lg:col-span-3 space-y-6">
+            
+            <!-- Result Bar -->
+            <div class="flex items-center justify-between text-xs text-zinc-400 pb-3 border-b border-zinc-800/80">
+                <p>Menampilkan <strong class="text-zinc-100">{{ products|length }}</strong> mahakarya pilihan</p>
+                {% if search_query %}
+                <p>Hasil pencarian untuk: <span class="text-[#c5a059]">"{{ search_query }}"</span></p>
+                {% endif %}
+            </div>
+
+            {% if products|length == 0 %}
+            <div class="glass-panel text-center py-20 px-4 rounded-3xl border border-zinc-800">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500">
+                    <i data-lucide="search-x" class="w-8 h-8"></i>
+                </div>
+                <h3 class="font-serif text-xl font-bold text-zinc-200 mb-2">Tidak Ditemukan Produk</h3>
+                <p class="text-xs text-zinc-400 max-w-sm mx-auto mb-6">Maaf, kami tidak menemukan karya yang sesuai dengan kriteria filter Anda.</p>
+                <a href="{{ url_for('shop') }}" class="inline-block px-6 py-2.5 rounded-xl btn-gold text-xs font-semibold uppercase tracking-wider">
+                    Reset Semua Filter
+                </a>
+            </div>
+            {% else %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {% for p in products %}
+                <div class="product-card glass-panel rounded-2xl overflow-hidden flex flex-col relative group">
+                    
+                    <!-- Badge -->
+                    {% if p.badge %}
+                    <div class="absolute top-3 left-3 z-20">
+                        <span class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md {% if p.badge == 'Sale' %}badge-sale{% else %}badge-gold{% endif %}">
+                            {{ p.badge }}
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    <!-- Wishlist Toggle Button -->
+                    <button onclick="toggleWishlist({{ p.id }}, '{{ p.name }}')" data-product-id="{{ p.id }}" class="btn-wishlist absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-zinc-950/70 backdrop-blur-md border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-rose-500 transition">
+                        <i data-lucide="heart" class="w-4 h-4"></i>
+                    </button>
+
+                    <!-- Product Image -->
+                    <a href="{{ url_for('product_detail', slug=p.slug) }}" class="relative block aspect-square overflow-hidden bg-zinc-950">
+                        <img src="{{ p.image_url }}" alt="{{ p.name }}" class="product-img-zoom w-full h-full object-cover">
+                    </a>
+
+                    <!-- Product Info -->
+                    <div class="p-5 flex-1 flex flex-col justify-between">
+                        <div>
+                            <span class="text-[10px] uppercase tracking-widest text-[#c5a059] font-medium">{{ p.category_name }}</span>
+                            <a href="{{ url_for('product_detail', slug=p.slug) }}">
+                                <h3 class="font-serif text-sm font-bold text-zinc-100 hover:text-[#c5a059] transition line-clamp-2 mt-1">
+                                    {{ p.name }}
+                                </h3>
+                            </a>
+                            
+                            <div class="flex items-center gap-1.5 mt-2">
+                                <div class="flex items-center text-[#c5a059]">
+                                    {% for i in range(5) %}
+                                    <i data-lucide="star" class="w-3 h-3 fill-current"></i>
+                                    {% endfor %}
+                                </div>
+                                <span class="text-[11px] text-zinc-400">({{ p.reviews_count }})</span>
+                            </div>
+
+                            <p class="text-xs text-zinc-400 line-clamp-2 mt-2 font-light">
+                                {{ p.description }}
+                            </p>
+                        </div>
+
+                        <!-- Price & Action -->
+                        <div class="pt-4 mt-4 border-t border-zinc-800/80 flex items-center justify-between">
+                            <div>
+                                <p class="font-semibold text-sm text-gold-gradient">{{ p.price | rupiah }}</p>
+                                {% if p.original_price and p.original_price > p.price %}
+                                <p class="text-[11px] text-zinc-500 line-through">{{ p.original_price | rupiah }}</p>
+                                {% endif %}
+                            </div>
+                            <button onclick="addToCart({{ p.id }}, 1)" class="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-700 hover:border-[#c5a059] hover:bg-[#c5a059] hover:text-black text-zinc-200 flex items-center justify-center transition duration-300" title="Tambah ke Keranjang">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        </main>
+
+    </div>
+
+</div>
+{% endblock %}

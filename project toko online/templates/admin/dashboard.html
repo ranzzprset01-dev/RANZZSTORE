@@ -1,0 +1,266 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}Dasbor & Metrik Bisnis — Admin Suite{% endblock %}
+{% block header_title %}Ringkasan Kinerja & Metrik Butik{% endblock %}
+
+{% block admin_content %}
+<div class="space-y-8">
+    
+    <!-- 4 Key Performance Metrics -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- Metric 1: Omset Resmi -->
+        <div class="glass-panel-gold p-6 rounded-2xl border border-[#c5a059]/40 relative overflow-hidden shadow-xl">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] uppercase tracking-wider text-zinc-400 font-semibold">Total Omset Terbayar</span>
+                <div class="w-8 h-8 rounded-lg bg-[#c5a059]/20 text-[#c5a059] flex items-center justify-center">
+                    <i data-lucide="coins" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <p class="font-serif text-2xl font-bold text-gold-gradient mt-3">{{ total_revenue | rupiah }}</p>
+            <p class="text-[10px] text-emerald-400 mt-1 flex items-center gap-1">
+                <i data-lucide="trending-up" class="w-3 h-3"></i> Transaksi terverifikasi lunas
+            </p>
+        </div>
+
+        <!-- Metric 2: Total Pesanan -->
+        <div class="glass-panel p-6 rounded-2xl border border-zinc-800 shadow-xl">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] uppercase tracking-wider text-zinc-400 font-semibold">Total Pesanan</span>
+                <div class="w-8 h-8 rounded-lg bg-zinc-800 text-zinc-300 flex items-center justify-center">
+                    <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <p class="font-serif text-2xl font-bold text-zinc-100 mt-3">{{ total_orders }} Transaksi</p>
+            <p class="text-[10px] text-zinc-400 mt-1">Keseluruhan kanal online & kasir</p>
+        </div>
+
+        <!-- Metric 3: Pesanan Menunggu -->
+        <div class="glass-panel p-6 rounded-2xl border border-zinc-800 shadow-xl">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] uppercase tracking-wider text-zinc-400 font-semibold">Menunggu Verifikasi</span>
+                <div class="w-8 h-8 rounded-lg bg-amber-950/60 text-amber-400 flex items-center justify-center">
+                    <i data-lucide="clock" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <p class="font-serif text-2xl font-bold text-amber-400 mt-3">{{ pending_orders }} Antrian</p>
+            <p class="text-[10px] text-zinc-400 mt-1">Memerlukan penanganan tim butik</p>
+        </div>
+
+        <!-- Metric 4: Peringatan Stok Rendah -->
+        <div class="glass-panel p-6 rounded-2xl border border-zinc-800 shadow-xl">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] uppercase tracking-wider text-zinc-400 font-semibold">Stok Kritis (<= 5)</span>
+                <div class="w-8 h-8 rounded-lg {% if low_stock_count > 0 %}bg-rose-950/60 text-rose-400{% else %}bg-zinc-800 text-zinc-400{% endif %} flex items-center justify-center">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <p class="font-serif text-2xl font-bold {% if low_stock_count > 0 %}text-rose-400{% else %}text-zinc-100{% endif %} mt-3">{{ low_stock_count }} Item</p>
+            <p class="text-[10px] text-zinc-400 mt-1">Perlu restock segera</p>
+        </div>
+
+    </div>
+
+    <!-- Charts Section (2 Columns) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Revenue Trend Chart (2 Cols) -->
+        <div class="lg:col-span-2 glass-panel p-6 rounded-2xl border border-zinc-800 space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-serif text-sm font-bold text-zinc-100 uppercase tracking-wider">Tren Penjualan Toko</h3>
+                    <p class="text-[11px] text-zinc-400">Total nilai transaksi berdasarkan riwayat pesanan</p>
+                </div>
+                <span class="text-xs text-[#c5a059] bg-[#c5a059]/10 px-3 py-1 rounded-full border border-[#c5a059]/20">Waktu Nyata</span>
+            </div>
+            <div class="h-64">
+                <canvas id="salesTrendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Category Distribution (1 Col) -->
+        <div class="glass-panel p-6 rounded-2xl border border-zinc-800 space-y-4">
+            <div>
+                <h3 class="font-serif text-sm font-bold text-zinc-100 uppercase tracking-wider">Komposisi Katalog</h3>
+                <p class="text-[11px] text-zinc-400">Distribusi produk menurut kategori</p>
+            </div>
+            <div class="h-64 flex items-center justify-center">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Low Stock Alert Banner & Action (if any) -->
+    {% if low_stock_items %}
+    <div class="glass-panel p-6 rounded-2xl border border-rose-900/50 bg-rose-950/10 space-y-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5 text-rose-400">
+                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                <h3 class="font-serif text-sm font-bold uppercase tracking-wider">Peringatan: Stok Mahakarya Menipis</h3>
+            </div>
+            <a href="{{ url_for('admin_products') }}" class="text-xs text-[#c5a059] hover:underline">Kelola Semua Stok</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for item in low_stock_items %}
+            <div class="p-3.5 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 truncate">
+                    <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-10 h-10 object-cover rounded-lg border border-zinc-800 flex-shrink-0">
+                    <div class="truncate">
+                        <p class="text-xs font-semibold text-zinc-200 truncate">{{ item.name }}</p>
+                        <p class="text-[10px] text-rose-400 font-bold">Tersisa: {{ item.stock }} unit</p>
+                    </div>
+                </div>
+                <form action="{{ url_for('admin_quick_stock', product_id=item.id) }}" method="POST">
+                    <input type="hidden" name="quantity" value="10">
+                    <button type="submit" class="px-3 py-1.5 rounded-lg btn-gold text-[10px] font-semibold whitespace-nowrap" title="Tambah 10 Unit">
+                        +10 Unit
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Orders Table -->
+    <div class="glass-panel rounded-2xl border border-zinc-800 p-6 space-y-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="font-serif text-base font-bold text-zinc-100 uppercase tracking-wider">Pesanan Terbaru Masuk</h3>
+                <p class="text-[11px] text-zinc-400">Daftar transaksi pelanggan terakhir</p>
+            </div>
+            <a href="{{ url_for('admin_orders') }}" class="text-xs text-[#c5a059] hover:underline flex items-center gap-1 font-semibold uppercase">
+                <span>Lihat Semua Pesanan</span>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="border-b border-zinc-800 text-zinc-400 uppercase font-bold tracking-wider">
+                        <th class="pb-3">No. Pesanan</th>
+                        <th class="pb-3">Pelanggan</th>
+                        <th class="pb-3">Metode & Kurir</th>
+                        <th class="pb-3 text-right">Total Transaksi</th>
+                        <th class="pb-3 text-center">Status Pembayaran</th>
+                        <th class="pb-3 text-center">Status Pesanan</th>
+                        <th class="pb-3 text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-800/60">
+                    {% for ord in recent_orders %}
+                    <tr class="hover:bg-zinc-800/30 transition">
+                        <td class="py-3.5 font-mono font-bold text-zinc-200">
+                            <a href="{{ url_for('admin_order_detail', order_id=ord.id) }}" class="text-[#c5a059] hover:underline">
+                                {{ ord.order_number }}
+                            </a>
+                        </td>
+                        <td class="py-3.5">
+                            <p class="font-medium text-zinc-100">{{ ord.customer_name }}</p>
+                            <p class="text-[10px] text-zinc-400">{{ ord.customer_phone }}</p>
+                        </td>
+                        <td class="py-3.5 text-zinc-300">
+                            <p>{{ ord.payment_method }}</p>
+                            <p class="text-[10px] text-zinc-400">{{ ord.shipping_courier }}</p>
+                        </td>
+                        <td class="py-3.5 text-right font-bold text-gold-gradient">
+                            {{ ord.total | rupiah }}
+                        </td>
+                        <td class="py-3.5 text-center">
+                            <span class="inline-block px-2.5 py-1 text-[10px] font-bold rounded-full uppercase {% if ord.payment_status == 'paid' %}bg-emerald-950/60 text-emerald-400 border border-emerald-800{% else %}bg-amber-950/60 text-amber-400 border border-amber-800{% endif %}">
+                                {{ ord.payment_status }}
+                            </span>
+                        </td>
+                        <td class="py-3.5 text-center">
+                            <span class="inline-block px-2.5 py-1 text-[10px] font-bold rounded-full uppercase bg-zinc-800 text-zinc-300 border border-zinc-700">
+                                {{ ord.order_status }}
+                            </span>
+                        </td>
+                        <td class="py-3.5 text-right">
+                            <a href="{{ url_for('admin_order_detail', order_id=ord.id) }}" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-[#c5a059] hover:text-black text-zinc-300 text-[11px] font-medium transition">
+                                Detail
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block admin_scripts %}
+<script>
+    // Sales Trend Chart
+    const trendCtx = document.getElementById('salesTrendChart').getContext('2d');
+    const trendLabels = {{ trend_labels | safe }};
+    const trendTotals = {{ trend_totals | safe }};
+
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: trendLabels.length ? trendLabels : ['Hari 1', 'Hari 2', 'Hari 3', 'Hari 4', 'Hari 5'],
+            datasets: [{
+                label: 'Omset Penjualan (Rp)',
+                data: trendTotals.length ? trendTotals : [12000000, 18500000, 14000000, 22000000, 31000000],
+                borderColor: '#c5a059',
+                backgroundColor: 'rgba(197, 160, 89, 0.15)',
+                fill: true,
+                tension: 0.35,
+                borderWidth: 2,
+                pointBackgroundColor: '#c5a059'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#94a3b8', font: { size: 10 } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8', font: { size: 10 } }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    // Category Distribution Chart
+    const catCtx = document.getElementById('categoryChart').getContext('2d');
+    const catLabels = {{ cat_labels | safe }};
+    const catData = {{ cat_data | safe }};
+
+    new Chart(catCtx, {
+        type: 'doughnut',
+        data: {
+            labels: catLabels,
+            datasets: [{
+                data: catData,
+                backgroundColor: ['#c5a059', '#3b82f6', '#10b981', '#a855f7', '#f43f5e'],
+                borderColor: '#0e1118',
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#cbd5e1', font: { size: 10 } }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

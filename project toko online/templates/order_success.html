@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}Konfirmasi Pesanan {{ order.order_number }} — RANZZSTORE{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+    
+    <div class="text-center space-y-4 mb-10">
+        <div class="w-16 h-16 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto shadow-[0_0_25px_rgba(16,185,129,0.25)]">
+            <i data-lucide="check" class="w-8 h-8"></i>
+        </div>
+        <span class="text-xs uppercase tracking-[0.25em] text-[#c5a059] font-bold">Terima Kasih Atas Pesanan Anda</span>
+        <h1 class="font-serif text-3xl sm:text-4xl font-bold text-zinc-100">Pesanan Berhasil Dicatat</h1>
+        <p class="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto">
+            Nomor Pesanan Resmi Anda: <strong class="text-zinc-100 font-mono tracking-wider">{{ order.order_number }}</strong>
+        </p>
+    </div>
+
+    <!-- Payment Instruction Box -->
+    <div class="glass-panel-gold rounded-3xl p-6 sm:p-8 mb-8 border border-[#c5a059]/40 shadow-2xl space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-zinc-800 gap-2">
+            <div>
+                <p class="text-xs uppercase tracking-wider text-zinc-400">Total yang Harus Dibayar:</p>
+                <p class="font-serif text-3xl font-bold text-gold-gradient">{{ order.total | rupiah }}</p>
+            </div>
+            <div>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold {% if order.payment_status == 'paid' %}bg-emerald-900/40 border border-emerald-500/40 text-emerald-300{% else %}bg-amber-900/40 border border-amber-500/40 text-amber-300{% endif %}">
+                    <span class="w-2 h-2 rounded-full {% if order.payment_status == 'paid' %}bg-emerald-400{% else %}bg-amber-400 animate-pulse{% endif %}"></span>
+                    <span>Status: {% if order.payment_status == 'paid' %}Lunas (Terverifikasi){% else %}Menunggu Pembayaran{% endif %}</span>
+                </span>
+            </div>
+        </div>
+
+        {% if order.payment_method == 'QRIS' %}
+        <!-- QRIS Simulation -->
+        <div class="flex flex-col sm:flex-row items-center gap-8 py-2">
+            <div class="p-3 bg-white rounded-2xl shadow-xl flex-shrink-0">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=RANZZSTORE_PAY_{{ order.order_number }}_{{ order.total }}" alt="QRIS QR Code" class="w-44 h-44">
+                <p class="text-[10px] text-zinc-800 font-bold text-center mt-1 uppercase tracking-wider">NMID: ID102938472910</p>
+            </div>
+            <div class="space-y-3 text-xs text-zinc-300 text-left">
+                <h4 class="font-serif text-base font-bold text-zinc-100">Instruksi Pembayaran QRIS:</h4>
+                <ol class="list-decimal list-inside space-y-1.5 text-zinc-400">
+                    <li>Buka aplikasi m-Banking (BCA, Mandiri, BRI, BNI) atau e-Wallet (GoPay, OVO, Dana).</li>
+                    <li>Pilih menu <strong>Pindai / Scan QRIS</strong>.</li>
+                    <li>Arahkan kamera ke QR Code di samping.</li>
+                    <li>Pastikan nama merchant adalah <strong>RANZZSTORE</strong> dan nominal sesuai.</li>
+                </ol>
+                {% if order.payment_status != 'paid' %}
+                <button onclick="triggerSimulatedPay()" id="btn-simulate-pay" class="mt-4 px-6 py-2.5 rounded-xl btn-gold text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                    <span>Simulasikan Pembayaran Berhasil</span>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        {% elif 'VA' in order.payment_method %}
+        <!-- Virtual Account Simulation -->
+        <div class="space-y-4 py-2">
+            <div class="p-4 rounded-xl bg-zinc-900 border border-zinc-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <p class="text-xs text-zinc-400">Nomor Virtual Account {{ order.payment_method.replace('_', ' ') }}:</p>
+                    <p class="font-mono text-2xl font-bold text-zinc-100 tracking-wider">{{ simulated_va }}</p>
+                </div>
+                <button onclick="navigator.clipboard.writeText('{{ simulated_va }}'); showToast('Nomor VA disalin!', 'success')" class="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 flex items-center gap-2">
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                    <span>Salin Nomor VA</span>
+                </button>
+            </div>
+            {% if order.payment_status != 'paid' %}
+            <button onclick="triggerSimulatedPay()" id="btn-simulate-pay" class="px-6 py-2.5 rounded-xl btn-gold text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                <span>Simulasikan Transfer Bank Sukses</span>
+            </button>
+            {% endif %}
+        </div>
+
+        {% else %}
+        <!-- Other methods -->
+        <div class="py-2 text-xs text-zinc-300 space-y-2">
+            <p>Metode Pembayaran: <strong class="text-zinc-100">{{ order.payment_method }}</strong></p>
+            <p class="text-zinc-400">Tim pramutamu butik kami akan segera menghubungi nomor WhatsApp Anda untuk konfirmasi jadwal penyerahan pesanan.</p>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- Quick Tool Action Buttons -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+        <a href="{{ url_for('track_order', order_number=order.order_number) }}" class="p-4 rounded-2xl glass-panel border border-zinc-800 hover:border-[#c5a059] flex items-center gap-3 transition group">
+            <div class="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[#c5a059] group-hover:scale-110 transition">
+                <i data-lucide="truck" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h4 class="text-xs font-bold text-zinc-100 uppercase tracking-wider">Lacak Pesanan</h4>
+                <p class="text-[11px] text-zinc-400">Pantau proses pengiriman</p>
+            </div>
+        </a>
+
+        <a href="{{ url_for('view_invoice', order_number=order.order_number) }}" target="_blank" class="p-4 rounded-2xl glass-panel border border-zinc-800 hover:border-[#c5a059] flex items-center gap-3 transition group">
+            <div class="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[#c5a059] group-hover:scale-110 transition">
+                <i data-lucide="printer" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h4 class="text-xs font-bold text-zinc-100 uppercase tracking-wider">Cetak Invoice</h4>
+                <p class="text-[11px] text-zinc-400">Unduh faktur resmi</p>
+            </div>
+        </a>
+
+        <a href="{{ url_for('shop') }}" class="p-4 rounded-2xl glass-panel border border-zinc-800 hover:border-[#c5a059] flex items-center gap-3 transition group">
+            <div class="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[#c5a059] group-hover:scale-110 transition">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h4 class="text-xs font-bold text-zinc-100 uppercase tracking-wider">Lanjut Belanja</h4>
+                <p class="text-[11px] text-zinc-400">Jelajahi karya lainnya</p>
+            </div>
+        </a>
+    </div>
+
+    <!-- Order Item Summary Table -->
+    <div class="glass-panel rounded-2xl border border-zinc-800 p-6 space-y-4">
+        <h3 class="font-serif text-base font-bold text-zinc-100 uppercase tracking-wider">Rincian Mahakarya yang Dipesan</h3>
+        <div class="divide-y divide-zinc-800/80 text-xs">
+            {% for it in items %}
+            <div class="py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <img src="{{ it.image_url }}" alt="{{ it.product_name }}" class="w-12 h-12 object-cover rounded-lg border border-zinc-800">
+                    <div>
+                        <p class="font-semibold text-zinc-200">{{ it.product_name }}</p>
+                        {% if it.selected_variant %}
+                        <p class="text-[10px] text-[#c5a059]">Varian: {{ it.selected_variant }}</p>
+                        {% endif %}
+                        <p class="text-[10px] text-zinc-400">{{ it.quantity }} × {{ it.product_price | rupiah }}</p>
+                    </div>
+                </div>
+                <span class="font-bold text-zinc-100">{{ it.subtotal | rupiah }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    async function triggerSimulatedPay() {
+        const btn = document.getElementById('btn-simulate-pay');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = 'Mengonfirmasi Pembayaran...';
+        }
+
+        try {
+            const res = await fetch('/api/order/simulate-pay/{{ order.order_number }}', {
+                method: 'POST'
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => window.location.reload(), 1200);
+            }
+        } catch (e) {
+            showToast('Gagal memverifikasi simulasi.', 'error');
+        }
+    }
+</script>
+{% endblock %}

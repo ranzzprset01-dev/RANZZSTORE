@@ -1,0 +1,128 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}Manajemen Pesanan & Pengiriman — Admin Suite{% endblock %}
+{% block header_title %}Daftar Pesanan & Pelacakan Logistik{% endblock %}
+
+{% block admin_content %}
+<div class="space-y-6">
+    
+    <!-- Status Filter Tabs & Action Bar -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        
+        <!-- Status Tabs -->
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ url_for('admin_orders') }}" class="px-3.5 py-1.5 text-xs rounded-full border transition {% if not current_status %}border-[#c5a059] bg-[#c5a059]/10 text-[#c5a059] font-bold{% else %}border-zinc-800 text-zinc-400 hover:border-zinc-700{% endif %}">
+                Semua Pesanan
+            </a>
+            <a href="{{ url_for('admin_orders', status='pending') }}" class="px-3.5 py-1.5 text-xs rounded-full border transition {% if current_status == 'pending' %}border-amber-500 bg-amber-500/10 text-amber-400 font-bold{% else %}border-zinc-800 text-zinc-400 hover:border-zinc-700{% endif %}">
+                Menunggu Pembayaran
+            </a>
+            <a href="{{ url_for('admin_orders', status='processing') }}" class="px-3.5 py-1.5 text-xs rounded-full border transition {% if current_status == 'processing' %}border-blue-500 bg-blue-500/10 text-blue-400 font-bold{% else %}border-zinc-800 text-zinc-400 hover:border-zinc-700{% endif %}">
+                Sedang Diproses
+            </a>
+            <a href="{{ url_for('admin_orders', status='shipped') }}" class="px-3.5 py-1.5 text-xs rounded-full border transition {% if current_status == 'shipped' %}border-[#c5a059] bg-[#c5a059]/15 text-[#c5a059] font-bold{% else %}border-zinc-800 text-zinc-400 hover:border-zinc-700{% endif %}">
+                Dalam Pengiriman
+            </a>
+            <a href="{{ url_for('admin_orders', status='completed') }}" class="px-3.5 py-1.5 text-xs rounded-full border transition {% if current_status == 'completed' %}border-emerald-500 bg-emerald-500/10 text-emerald-400 font-bold{% else %}border-zinc-800 text-zinc-400 hover:border-zinc-700{% endif %}">
+                Pesanan Selesai
+            </a>
+        </div>
+
+        <!-- Right: Search & Export -->
+        <div class="flex items-center gap-3">
+            <form action="{{ url_for('admin_orders') }}" method="GET" class="relative">
+                {% if current_status %}
+                <input type="hidden" name="status" value="{{ current_status }}">
+                {% endif %}
+                <input type="text" name="search" value="{{ search }}" placeholder="Cari No. Order / Pelanggan / Resi..." class="w-64 bg-zinc-900 border border-zinc-700 rounded-xl pl-9 pr-3 py-2 text-xs text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-2.5"></i>
+            </form>
+
+            <a href="{{ url_for('admin_export_orders') }}" class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-xs font-semibold text-zinc-300 flex items-center gap-2 transition whitespace-nowrap">
+                <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>Ekspor CSV</span>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Orders Table -->
+    <div class="glass-panel rounded-2xl border border-zinc-800 p-6 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="border-b border-zinc-800 text-zinc-400 uppercase font-bold tracking-wider">
+                        <th class="pb-3">No. Pesanan & Tanggal</th>
+                        <th class="pb-3">Pelanggan & Tujuan</th>
+                        <th class="pb-3">Kurir & Nomor Resi</th>
+                        <th class="pb-3 text-right">Nilai Total</th>
+                        <th class="pb-3 text-center">Bayar</th>
+                        <th class="pb-3 text-center">Status Kirim</th>
+                        <th class="pb-3 text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-800/60">
+                    {% if orders|length == 0 %}
+                    <tr>
+                        <td colspan="7" class="py-12 text-center text-zinc-500">
+                            Tidak ada data pesanan yang sesuai dengan filter.
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% for ord in orders %}
+                    <tr class="hover:bg-zinc-800/30 transition">
+                        
+                        <td class="py-4">
+                            <a href="{{ url_for('admin_order_detail', order_id=ord.id) }}" class="font-mono font-bold text-sm text-[#c5a059] hover:underline">
+                                {{ ord.order_number }}
+                            </a>
+                            <p class="text-[10px] text-zinc-400 mt-0.5">{{ ord.created_at }}</p>
+                        </td>
+
+                        <td class="py-4">
+                            <p class="font-bold text-zinc-100">{{ ord.customer_name }}</p>
+                            <p class="text-[10px] text-zinc-400">{{ ord.customer_phone }} • {{ ord.shipping_city }}</p>
+                        </td>
+
+                        <td class="py-4">
+                            <p class="text-zinc-200">{{ ord.shipping_courier }}</p>
+                            {% if ord.tracking_number %}
+                            <span class="inline-block mt-0.5 font-mono text-[10px] text-zinc-300 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-700">
+                                {{ ord.tracking_number }}
+                            </span>
+                            {% else %}
+                            <span class="text-[10px] text-zinc-500 italic">Belum ada resi</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="py-4 text-right font-bold text-gold-gradient text-sm">
+                            {{ ord.total | rupiah }}
+                        </td>
+
+                        <td class="py-4 text-center">
+                            <span class="inline-block px-2.5 py-1 text-[10px] font-bold rounded-full uppercase {% if ord.payment_status == 'paid' %}bg-emerald-950/60 text-emerald-400 border border-emerald-800{% else %}bg-amber-950/60 text-amber-400 border border-amber-800{% endif %}">
+                                {{ ord.payment_status }}
+                            </span>
+                        </td>
+
+                        <td class="py-4 text-center">
+                            <span class="inline-block px-2.5 py-1 text-[10px] font-bold rounded-full uppercase {% if ord.order_status == 'completed' %}bg-emerald-900/40 text-emerald-300 border border-emerald-700{% elif ord.order_status == 'shipped' %}bg-[#c5a059]/20 text-[#c5a059] border border-[#c5a059]/40{% elif ord.order_status == 'processing' %}bg-blue-900/40 text-blue-300 border border-blue-700{% else %}bg-zinc-800 text-zinc-400 border border-zinc-700{% endif %}">
+                                {{ ord.order_status }}
+                            </span>
+                        </td>
+
+                        <td class="py-4 text-right">
+                            <a href="{{ url_for('admin_order_detail', order_id=ord.id) }}" class="px-3.5 py-1.5 rounded-lg btn-gold text-[11px] font-semibold">
+                                Kelola & Resi
+                            </a>
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

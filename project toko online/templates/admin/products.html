@@ -1,0 +1,332 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}Manajemen Mahakarya & Stok — Admin Suite{% endblock %}
+{% block header_title %}Katalog Produk & Pengendalian Stok{% endblock %}
+
+{% block admin_content %}
+<div class="space-y-6">
+    
+    <!-- Action Bar & Filters -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        
+        <!-- Search & Filter Form -->
+        <form action="{{ url_for('admin_products') }}" method="GET" class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+            <div class="relative flex-1 sm:w-64">
+                <input type="text" name="search" value="{{ search }}" placeholder="Cari nama atau SKU..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl pl-9 pr-3 py-2 text-xs text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-2.5"></i>
+            </div>
+            
+            <select name="category_id" onchange="this.form.submit()" class="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059]">
+                <option value="">Semua Kategori</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if selected_cat == cat.id|string %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+
+            {% if search or selected_cat %}
+            <a href="{{ url_for('admin_products') }}" class="text-xs text-rose-400 hover:underline px-2">Reset</a>
+            {% endif %}
+        </form>
+
+        <!-- Right Buttons -->
+        <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <a href="{{ url_for('admin_export_products') }}" class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-xs font-semibold text-zinc-300 flex items-center gap-2 transition">
+                <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>Ekspor CSV</span>
+            </a>
+            
+            <button onclick="document.getElementById('modal-add-product').classList.remove('hidden')" class="px-4 py-2 rounded-xl btn-gold text-xs font-semibold flex items-center gap-2 shadow-lg">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Tambah Produk Baru</span>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Products Table -->
+    <div class="glass-panel rounded-2xl border border-zinc-800 p-6 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="border-b border-zinc-800 text-zinc-400 uppercase font-bold tracking-wider">
+                        <th class="pb-3">Mahakarya</th>
+                        <th class="pb-3">Kategori</th>
+                        <th class="pb-3">SKU & Label</th>
+                        <th class="pb-3 text-right">Harga Resmi</th>
+                        <th class="pb-3 text-center">Stok Unit</th>
+                        <th class="pb-3 text-center">Status</th>
+                        <th class="pb-3 text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-800/60">
+                    {% for p in products %}
+                    <tr class="hover:bg-zinc-800/30 transition">
+                        
+                        <!-- Thumbnail & Name -->
+                        <td class="py-4">
+                            <div class="flex items-center gap-3">
+                                <img src="{{ p.image_url }}" alt="{{ p.name }}" class="w-12 h-12 object-cover rounded-xl border border-zinc-800 bg-zinc-950 flex-shrink-0">
+                                <div>
+                                    <p class="font-serif font-bold text-zinc-100 text-sm">{{ p.name }}</p>
+                                    <p class="text-[10px] text-zinc-400 line-clamp-1 max-w-xs">{{ p.description }}</p>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Category -->
+                        <td class="py-4 text-zinc-300">
+                            {{ p.category_name or 'Umum' }}
+                        </td>
+
+                        <!-- SKU & Badge -->
+                        <td class="py-4">
+                            <p class="font-mono text-xs text-zinc-300 font-semibold">{{ p.sku }}</p>
+                            {% if p.badge %}
+                            <span class="inline-block mt-1 px-2 py-0.5 text-[9px] uppercase font-bold rounded badge-gold">
+                                {{ p.badge }}
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Price -->
+                        <td class="py-4 text-right">
+                            <p class="font-bold text-gold-gradient text-sm">{{ p.price | rupiah }}</p>
+                            {% if p.original_price and p.original_price > p.price %}
+                            <p class="text-[10px] text-zinc-500 line-through">{{ p.original_price | rupiah }}</p>
+                            {% endif %}
+                        </td>
+
+                        <!-- Stock Level & Quick Replenish -->
+                        <td class="py-4 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <span class="font-mono font-bold text-sm {% if p.stock <= 3 %}text-rose-400{% elif p.stock <= 5 %}text-amber-400{% else %}text-emerald-400{% endif %}">
+                                    {{ p.stock }}
+                                </span>
+                                <form action="{{ url_for('admin_quick_stock', product_id=p.id) }}" method="POST">
+                                    <input type="hidden" name="quantity" value="10">
+                                    <button type="submit" class="p-1 rounded bg-zinc-800 hover:bg-[#c5a059] hover:text-black text-zinc-400 text-[10px] transition" title="Tambah +10 Stok">
+                                        <i data-lucide="plus" class="w-3 h-3"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+
+                        <!-- Status Badge -->
+                        <td class="py-4 text-center">
+                            {% if p.stock > 0 %}
+                            <span class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800">Tersedia</span>
+                            {% else %}
+                            <span class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-rose-950/60 text-rose-400 border border-rose-800">Habis</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="py-4 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <button type="button" onclick="openEditModal({{ p.id }}, '{{ p.name }}', {{ p.category_id }}, {{ p.price }}, {{ p.original_price or 0 }}, {{ p.stock }}, '{{ p.sku }}', '{{ p.image_url }}', '{{ p.description | replace("'", "\\'") }}', '{{ p.badge or "" }}', {{ p.is_featured }})" class="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition" title="Ubah Produk">
+                                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                                </button>
+                                
+                                <form action="{{ url_for('admin_delete_product', product_id=p.id) }}" method="POST" onsubmit="return confirm('Hapus karya ini dari etalase?')">
+                                    <button type="submit" class="p-2 rounded-lg bg-zinc-800 hover:bg-rose-900/60 text-zinc-400 hover:text-rose-400 transition" title="Hapus Produk">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODAL: ADD PRODUCT -->
+<div id="modal-add-product" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="glass-panel-gold rounded-3xl p-6 sm:p-8 border border-[#c5a059]/40 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-6">
+        
+        <div class="flex items-center justify-between pb-4 border-b border-zinc-800">
+            <h3 class="font-serif text-lg font-bold text-zinc-100">Tambah Mahakarya Baru</h3>
+            <button onclick="document.getElementById('modal-add-product').classList.add('hidden')" class="p-1 text-zinc-400 hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form action="{{ url_for('admin_add_product') }}" method="POST" class="space-y-4 text-xs">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-zinc-400 mb-1">Nama Mahakarya *</label>
+                    <input type="text" name="name" required placeholder="Contoh: Royal Skeleton Tourbillon" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+                <div>
+                    <label class="block text-zinc-400 mb-1">Kategori *</label>
+                    <select name="category_id" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-zinc-400 mb-1">Harga Jual (IDR) *</label>
+                    <input type="number" name="price" required placeholder="14500000" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+                <div>
+                    <label class="block text-zinc-400 mb-1">Harga Coret / Asli (IDR)</label>
+                    <input type="number" name="original_price" placeholder="18500000" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+                <div>
+                    <label class="block text-zinc-400 mb-1">Jumlah Stok Awal *</label>
+                    <input type="number" name="stock" required value="10" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-zinc-400 mb-1">Kode SKU Unik *</label>
+                    <input type="text" name="sku" required placeholder="AUR-WATCH-099" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059] uppercase">
+                </div>
+                <div>
+                    <label class="block text-zinc-400 mb-1">Badge Khusus (Opsional)</label>
+                    <input type="text" name="badge" placeholder="Terlaris / Edisi Terbatas / Baru" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-zinc-400 mb-1">URL Foto Produk Utama (Unsplash / CDN) *</label>
+                <input type="url" name="image_url" required placeholder="https://images.unsplash.com/..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+            </div>
+
+            <div>
+                <label class="block text-zinc-400 mb-1">Deskripsi Lengkap & Narasi Karya *</label>
+                <textarea name="description" rows="3" required placeholder="Deskripsikan material, movement, dan keunggulan kriya..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]"></textarea>
+            </div>
+
+            <div class="flex items-center gap-2 pt-2">
+                <input type="checkbox" id="add-featured" name="is_featured" value="1" class="accent-[#c5a059]">
+                <label for="add-featured" class="text-zinc-300">Tampilkan di Koleksi Unggulan Beranda (Featured Showcase)</label>
+            </div>
+
+            <div class="pt-4 flex justify-end gap-3">
+                <button type="button" onclick="document.getElementById('modal-add-product').classList.add('hidden')" class="px-5 py-2.5 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+                    Batal
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-xl btn-gold font-semibold uppercase tracking-wider">
+                    Simpan Produk
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<!-- MODAL: EDIT PRODUCT -->
+<div id="modal-edit-product" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="glass-panel-gold rounded-3xl p-6 sm:p-8 border border-[#c5a059]/40 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-6">
+        
+        <div class="flex items-center justify-between pb-4 border-b border-zinc-800">
+            <h3 class="font-serif text-lg font-bold text-zinc-100">Ubah Rincian Mahakarya</h3>
+            <button onclick="document.getElementById('modal-edit-product').classList.add('hidden')" class="p-1 text-zinc-400 hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form id="form-edit-product" method="POST" class="space-y-4 text-xs">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-zinc-400 mb-1">Nama Mahakarya *</label>
+                    <input type="text" id="edit-name" name="name" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+                <div>
+                    <label class="block text-zinc-400 mb-1">Kategori *</label>
+                    <select id="edit-category" name="category_id" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-zinc-400 mb-1">Harga Jual (IDR) *</label>
+                    <input type="number" id="edit-price" name="price" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+                <div>
+                    <label class="block text-zinc-400 mb-1">Harga Coret (IDR)</label>
+                    <input type="number" id="edit-orig-price" name="original_price" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+                <div>
+                    <label class="block text-zinc-400 mb-1">Stok Unit *</label>
+                    <input type="number" id="edit-stock" name="stock" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-zinc-400 mb-1">Kode SKU *</label>
+                    <input type="text" id="edit-sku" name="sku" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+                <div>
+                    <label class="block text-zinc-400 mb-1">Badge Khusus</label>
+                    <input type="text" id="edit-badge" name="badge" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-zinc-400 mb-1">URL Foto Produk Utama *</label>
+                <input type="url" id="edit-image" name="image_url" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+            </div>
+
+            <div>
+                <label class="block text-zinc-400 mb-1">Deskripsi *</label>
+                <textarea id="edit-desc" name="description" rows="3" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]"></textarea>
+            </div>
+
+            <div class="flex items-center gap-2 pt-2">
+                <input type="checkbox" id="edit-featured" name="is_featured" value="1" class="accent-[#c5a059]">
+                <label for="edit-featured" class="text-zinc-300">Tampilkan di Koleksi Unggulan Beranda</label>
+            </div>
+
+            <div class="pt-4 flex justify-end gap-3">
+                <button type="button" onclick="document.getElementById('modal-edit-product').classList.add('hidden')" class="px-5 py-2.5 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+                    Batal
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-xl btn-gold font-semibold uppercase tracking-wider">
+                    Simpan Perubahan
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block admin_scripts %}
+<script>
+    function openEditModal(id, name, catId, price, origPrice, stock, sku, imgUrl, desc, badge, isFeatured) {
+        const form = document.getElementById('form-edit-product');
+        form.action = `/admin/products/edit/${id}`;
+        
+        document.getElementById('edit-name').value = name;
+        document.getElementById('edit-category').value = catId;
+        document.getElementById('edit-price').value = price;
+        document.getElementById('edit-orig-price').value = origPrice || '';
+        document.getElementById('edit-stock').value = stock;
+        document.getElementById('edit-sku').value = sku;
+        document.getElementById('edit-image').value = imgUrl;
+        document.getElementById('edit-desc').value = desc;
+        document.getElementById('edit-badge').value = badge;
+        document.getElementById('edit-featured').checked = isFeatured === 1;
+
+        document.getElementById('modal-edit-product').classList.remove('hidden');
+    }
+</script>
+{% endblock %}

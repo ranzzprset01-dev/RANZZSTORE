@@ -1,0 +1,424 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}Mesin Kasir Butik (POS Terminal) — Admin Suite{% endblock %}
+{% block header_title %}Point of Sale (POS) — Kasir Butik SCBD{% endblock %}
+
+{% block admin_content %}
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start h-[calc(100vh-140px)]">
+    
+    <!-- Left 7 Cols: Product Selector Grid -->
+    <div class="xl:col-span-7 flex flex-col h-full space-y-4">
+        
+        <!-- Search & Filter Header -->
+        <div class="glass-panel p-4 rounded-2xl border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3 flex-shrink-0">
+            <div class="relative w-full sm:w-72">
+                <input type="text" id="pos-search" oninput="filterPOSProducts()" placeholder="Ketik nama atau scan barcode SKU..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl pl-9 pr-4 py-2 text-xs text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                <i data-lucide="search" class="w-4 h-4 text-zinc-500 absolute left-3 top-2.5"></i>
+            </div>
+
+            <!-- Category Pills -->
+            <div class="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+                <button type="button" onclick="filterPOSCategory('all', this)" class="pos-cat-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#c5a059] text-black transition whitespace-nowrap">
+                    Semua
+                </button>
+                {% for cat in categories %}
+                <button type="button" onclick="filterPOSCategory('{{ cat.name }}', this)" class="pos-cat-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 transition whitespace-nowrap">
+                    {{ cat.name }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Products Scrollable Grid -->
+        <div class="flex-1 overflow-y-auto pr-1">
+            <div id="pos-product-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {% for p in products %}
+                <div class="pos-product-card glass-panel rounded-xl p-3 border border-zinc-800/80 hover:border-[#c5a059] cursor-pointer transition flex flex-col justify-between group"
+                     data-name="{{ p.name.lower() }}"
+                     data-sku="{{ p.sku.lower() }}"
+                     data-category="{{ p.category_name }}"
+                     onclick="posAddToCart({{ p.id }}, '{{ p.name }}', {{ p.price }}, '{{ p.image_url }}', {{ p.stock }})">
+                    
+                    <div class="relative aspect-square rounded-lg overflow-hidden bg-zinc-950 mb-2">
+                        <img src="{{ p.image_url }}" alt="{{ p.name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                        <span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/80 text-[9px] font-mono font-bold text-zinc-300">
+                            Stok: {{ p.stock }}
+                        </span>
+                    </div>
+
+                    <div>
+                        <span class="text-[9px] text-[#c5a059] uppercase tracking-wider block truncate">{{ p.category_name }}</span>
+                        <h4 class="font-serif text-xs font-bold text-zinc-100 line-clamp-1 group-hover:text-[#c5a059] transition">{{ p.name }}</h4>
+                        <p class="font-bold text-gold-gradient text-xs mt-1">{{ p.price | rupiah }}</p>
+                    </div>
+
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right 5 Cols: Cashier Terminal -->
+    <div class="xl:col-span-5 h-full flex flex-col glass-panel-gold rounded-2xl border border-[#c5a059]/40 p-5 shadow-2xl">
+        
+        <!-- Terminal Header -->
+        <div class="pb-3 border-b border-zinc-800 flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center gap-2">
+                <i data-lucide="printer" class="w-5 h-5 text-[#c5a059]"></i>
+                <h3 class="font-serif text-sm font-bold text-zinc-100 uppercase tracking-wider">Terminal Kasir Fisik</h3>
+            </div>
+            <button onclick="clearPOSCart()" class="text-[11px] text-rose-400 hover:underline">Kosongkan</button>
+        </div>
+
+        <!-- Customer Name Input -->
+        <div class="py-3 border-b border-zinc-800 flex-shrink-0">
+            <input type="text" id="pos-customer" value="Tamu Walk-in Butik" placeholder="Nama Pelanggan (Walk-in)" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059]">
+        </div>
+
+        <!-- POS Cart Items List -->
+        <div id="pos-cart-items" class="flex-1 overflow-y-auto py-3 space-y-2.5 divide-y divide-zinc-800/60">
+            <div class="text-center py-12 text-zinc-500 text-xs">
+                <i data-lucide="scan-line" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+                <p>Klik produk di sebelah kiri untuk memasukkan ke kasir</p>
+            </div>
+        </div>
+
+        <!-- POS Financial Calculations & Payment -->
+        <div class="pt-3 border-t border-zinc-800 space-y-3 flex-shrink-0 text-xs">
+            
+            <div class="space-y-1.5">
+                <div class="flex justify-between text-zinc-400">
+                    <span>Subtotal POS:</span>
+                    <span id="pos-subtotal" class="font-semibold text-zinc-200">Rp 0</span>
+                </div>
+
+                <div class="flex items-center justify-between text-zinc-400 gap-2">
+                    <span>Potongan Kasir (Rp):</span>
+                    <input type="number" id="pos-discount" value="0" oninput="calculatePOSTotal()" class="w-32 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-right text-xs text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+
+                <div class="pt-2 border-t border-zinc-800 flex justify-between items-baseline">
+                    <span class="font-bold text-sm text-zinc-100">Total Tagihan:</span>
+                    <span id="pos-grand-total" class="font-serif text-xl font-bold text-gold-gradient">Rp 0</span>
+                </div>
+            </div>
+
+            <!-- Payment Method & Cash Received -->
+            <div class="space-y-2 pt-1">
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="pos-pay-method" onchange="toggleCashInput(this.value)" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059]">
+                        <option value="TUNAI (CASH)">TUNAI (CASH)</option>
+                        <option value="EDC BCA DEBIT">EDC BCA DEBIT</option>
+                        <option value="EDC MANDIRI">EDC MANDIRI</option>
+                        <option value="QRIS STATIS BUTIK">QRIS STATIS BUTIK</option>
+                        <option value="KARTU KREDIT">KARTU KREDIT</option>
+                    </select>
+
+                    <input type="number" id="pos-cash-given" oninput="calculateChange()" placeholder="Uang Tunai Diterima" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+
+                <!-- Kembalian Display -->
+                <div id="pos-change-box" class="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs">
+                    <span class="text-zinc-400">Kembalian Kasir:</span>
+                    <span id="pos-change" class="font-mono font-bold text-sm text-emerald-400">Rp 0</span>
+                </div>
+            </div>
+
+            <!-- Process & Print Receipt Button -->
+            <button type="button" onclick="processPOSCheckout()" id="btn-pos-submit" class="w-full py-3.5 rounded-xl btn-gold font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-2xl">
+                <i data-lucide="check-check" class="w-4 h-4"></i>
+                <span>Selesaikan Transaksi & Cetak Struk</span>
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- THERMAL RECEIPT PRINT MODAL -->
+<div id="modal-receipt" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden no-print-bg">
+    <div class="bg-white text-zinc-900 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4">
+        
+        <!-- Printable Area -->
+        <div id="printable-receipt" class="text-center font-mono text-[11px] space-y-2 text-zinc-900">
+            <h3 class="font-bold text-sm tracking-wider uppercase">RANZZSTORE</h3>
+            <p class="text-[9px]">Atelier SCBD Suites Tower 2, Jakarta</p>
+            <p class="text-[9px]">Telp: +62 812-8888-7799</p>
+            <div class="border-b border-dashed border-zinc-400 my-2"></div>
+            
+            <div class="text-left space-y-0.5 text-[10px]">
+                <p>No. Transaksi : <span id="rec-order-num">-</span></p>
+                <p>Waktu         : <span id="rec-date">-</span></p>
+                <p>Kasir         : Alexander Vance (Admin)</p>
+                <p>Pelanggan     : <span id="rec-customer">-</span></p>
+            </div>
+            
+            <div class="border-b border-dashed border-zinc-400 my-2"></div>
+
+            <div id="rec-items-list" class="space-y-1 text-left text-[10px]">
+                <!-- Items list inserted here -->
+            </div>
+
+            <div class="border-b border-dashed border-zinc-400 my-2"></div>
+
+            <div class="space-y-0.5 text-right text-[10px]">
+                <p>Subtotal  : <span id="rec-subtotal">Rp 0</span></p>
+                <p>Diskon    : <span id="rec-discount">Rp 0</span></p>
+                <p class="font-bold text-xs">Total     : <span id="rec-total">Rp 0</span></p>
+                <p>Bayar     : <span id="rec-cash">Rp 0</span></p>
+                <p>Kembalian : <span id="rec-change">Rp 0</span></p>
+            </div>
+
+            <div class="border-b border-dashed border-zinc-400 my-2"></div>
+            <p class="text-[9px]">Terima kasih atas kunjungan Anda.</p>
+            <p class="text-[8px] italic">Barang bersertifikat garansi resmi 5 tahun.</p>
+        </div>
+
+        <!-- Buttons (No Print) -->
+        <div class="pt-3 border-t border-zinc-200 flex gap-2 no-print">
+            <button type="button" onclick="window.print()" class="flex-1 py-2 rounded-lg bg-zinc-900 text-white text-xs font-semibold flex items-center justify-center gap-1.5">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i> Cetak Struk
+            </button>
+            <button type="button" onclick="closeReceiptModal()" class="px-4 py-2 rounded-lg border border-zinc-300 text-zinc-700 text-xs font-semibold">
+                Selesai
+            </button>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block admin_scripts %}
+<script>
+    let posCart = [];
+
+    function posAddToCart(id, name, price, img, stock) {
+        const existing = posCart.find(i => i.product_id === id);
+        if (existing) {
+            if (existing.quantity >= stock) {
+                showToast(`Stok maksimal (${stock}) tercapai`, 'warning');
+                return;
+            }
+            existing.quantity += 1;
+        } else {
+            posCart.push({
+                product_id: id,
+                name: name,
+                price: price,
+                image_url: img,
+                quantity: 1,
+                max_stock: stock
+            });
+        }
+        renderPOSCart();
+    }
+
+    function updatePOSQty(index, delta) {
+        const item = posCart[index];
+        if (!item) return;
+        const newQty = item.quantity + delta;
+        if (newQty <= 0) {
+            posCart.splice(index, 1);
+        } else if (newQty > item.max_stock) {
+            showToast(`Maksimal ${item.max_stock} unit tersedia`, 'warning');
+            return;
+        } else {
+            item.quantity = newQty;
+        }
+        renderPOSCart();
+    }
+
+    function removePOSItem(index) {
+        posCart.splice(index, 1);
+        renderPOSCart();
+    }
+
+    function clearPOSCart() {
+        posCart = [];
+        renderPOSCart();
+    }
+
+    function renderPOSCart() {
+        const container = document.getElementById('pos-cart-items');
+        if (posCart.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-12 text-zinc-500 text-xs">
+                    <i data-lucide="scan-line" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+                    <p>Klik produk di sebelah kiri untuk memasukkan ke kasir</p>
+                </div>
+            `;
+            document.getElementById('pos-subtotal').innerText = 'Rp 0';
+            document.getElementById('pos-grand-total').innerText = 'Rp 0';
+            if (window.lucide) lucide.createIcons();
+            return;
+        }
+
+        let html = '';
+        let subtotal = 0;
+
+        posCart.forEach((item, idx) => {
+            const itemTotal = item.price * item.quantity;
+            subtotal += itemTotal;
+            html += `
+                <div class="flex items-center justify-between py-2 text-xs">
+                    <div class="flex items-center gap-2.5 truncate">
+                        <img src="${item.image_url}" class="w-9 h-9 object-cover rounded-lg border border-zinc-800">
+                        <div class="truncate">
+                            <p class="font-medium text-zinc-200 truncate">${item.name}</p>
+                            <p class="text-[10px] text-zinc-400">${formatRupiah(item.price)}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <div class="flex items-center border border-zinc-700 rounded-lg overflow-hidden bg-zinc-900">
+                            <button onclick="updatePOSQty(${idx}, -1)" class="w-6 h-6 flex items-center justify-center text-zinc-300 hover:bg-zinc-800">-</button>
+                            <span class="w-7 text-center font-bold text-zinc-100">${item.quantity}</span>
+                            <button onclick="updatePOSQty(${idx}, 1)" class="w-6 h-6 flex items-center justify-center text-zinc-300 hover:bg-zinc-800">+</button>
+                        </div>
+                        <span class="font-bold text-zinc-100 min-w-[70px] text-right">${formatRupiah(itemTotal)}</span>
+                        <button onclick="removePOSItem(${idx})" class="text-zinc-500 hover:text-rose-400 p-1">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+        document.getElementById('pos-subtotal').innerText = formatRupiah(subtotal);
+        calculatePOSTotal();
+        if (window.lucide) lucide.createIcons();
+    }
+
+    function calculatePOSTotal() {
+        let subtotal = posCart.reduce((sum, it) => sum + (it.price * it.quantity), 0);
+        let disc = parseFloat(document.getElementById('pos-discount').value) || 0;
+        let total = Math.max(0, subtotal - disc);
+        document.getElementById('pos-grand-total').innerText = formatRupiah(total);
+        calculateChange();
+    }
+
+    function calculateChange() {
+        let subtotal = posCart.reduce((sum, it) => sum + (it.price * it.quantity), 0);
+        let disc = parseFloat(document.getElementById('pos-discount').value) || 0;
+        let total = Math.max(0, subtotal - disc);
+        let cash = parseFloat(document.getElementById('pos-cash-given').value) || 0;
+        let change = Math.max(0, cash - total);
+        document.getElementById('pos-change').innerText = formatRupiah(change);
+    }
+
+    function toggleCashInput(method) {
+        const cashBox = document.getElementById('pos-change-box');
+        const cashInput = document.getElementById('pos-cash-given');
+        if (method === 'TUNAI (CASH)') {
+            cashBox.style.display = 'flex';
+            cashInput.style.display = 'block';
+        } else {
+            cashBox.style.display = 'none';
+            cashInput.style.display = 'none';
+        }
+    }
+
+    function filterPOSProducts() {
+        const query = document.getElementById('pos-search').value.toLowerCase().trim();
+        document.querySelectorAll('.pos-product-card').forEach(card => {
+            const name = card.dataset.name;
+            const sku = card.dataset.sku;
+            if (name.includes(query) || sku.includes(query)) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    function filterPOSCategory(cat, btn) {
+        document.querySelectorAll('.pos-cat-btn').forEach(b => {
+            b.classList.remove('bg-[#c5a059]', 'text-black', 'font-semibold');
+            b.classList.add('bg-zinc-900', 'text-zinc-300');
+        });
+        btn.classList.add('bg-[#c5a059]', 'text-black', 'font-semibold');
+
+        document.querySelectorAll('.pos-product-card').forEach(card => {
+            if (cat === 'all' || card.dataset.category === cat) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    async function processPOSCheckout() {
+        if (posCart.length === 0) {
+            showToast('Tas kasir masih kosong!', 'warning');
+            return;
+        }
+
+        const customer = document.getElementById('pos-customer').value || 'Tamu Walk-in';
+        const method = document.getElementById('pos-pay-method').value;
+        const discount = parseFloat(document.getElementById('pos-discount').value) || 0;
+        const cash = parseFloat(document.getElementById('pos-cash-given').value) || 0;
+
+        let subtotal = posCart.reduce((sum, it) => sum + (it.price * it.quantity), 0);
+        let total = Math.max(0, subtotal - discount);
+
+        if (method === 'TUNAI (CASH)' && cash < total) {
+            showToast('Nominal tunai diterima kurang dari total belanja!', 'error');
+            return;
+        }
+
+        const payload = {
+            items: posCart.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
+            customer_name: customer,
+            payment_method: method,
+            cash_given: cash,
+            discount_amount: discount
+        };
+
+        try {
+            const res = await fetch('/api/pos/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Populate Printable Receipt
+                document.getElementById('rec-order-num').innerText = data.order_number;
+                document.getElementById('rec-date').innerText = new Date().toLocaleString('id-ID');
+                document.getElementById('rec-customer').innerText = customer;
+                document.getElementById('rec-subtotal').innerText = formatRupiah(data.subtotal);
+                document.getElementById('rec-discount').innerText = formatRupiah(data.discount);
+                document.getElementById('rec-total').innerText = formatRupiah(data.total);
+                document.getElementById('rec-cash').innerText = formatRupiah(data.cash_given || data.total);
+                document.getElementById('rec-change').innerText = formatRupiah(data.change || 0);
+
+                let recItemsHtml = '';
+                posCart.forEach(it => {
+                    recItemsHtml += `
+                        <div class="flex justify-between">
+                            <span>${it.name.substring(0, 18)} (x${it.quantity})</span>
+                            <span>${formatRupiah(it.price * it.quantity)}</span>
+                        </div>
+                    `;
+                });
+                document.getElementById('rec-items-list').innerHTML = recItemsHtml;
+
+                // Open modal
+                document.getElementById('modal-receipt').classList.remove('hidden');
+                clearPOSCart();
+                showToast('Transaksi Kasir Berhasil!', 'success');
+            } else {
+                showToast(data.message || 'Gagal memproses transaksi', 'error');
+            }
+        } catch (e) {
+            showToast('Kesalahan koneksi POS.', 'error');
+        }
+    }
+
+    function closeReceiptModal() {
+        document.getElementById('modal-receipt').classList.add('hidden');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faktur Resmi — {{ order.order_number }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .font-serif {
+            font-family: 'Playfair Display', serif;
+        }
+        @media print {
+            body {
+                background: white;
+                color: black;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .invoice-box {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+            }
+        }
+    </style>
+</head>
+<body class="py-10 px-4">
+
+    <!-- Top Action Bar (no-print) -->
+    <div class="max-w-4xl mx-auto mb-6 flex items-center justify-between no-print">
+        <a href="{{ url_for('track_order', order_number=order.order_number) }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600 hover:text-black">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Kembali ke Pelacak</span>
+        </a>
+        <div class="flex items-center gap-3">
+            <button onclick="window.print()" class="px-5 py-2.5 rounded-xl bg-zinc-900 text-white text-xs font-semibold flex items-center gap-2 hover:bg-black transition shadow-lg">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                <span>Cetak / Simpan PDF</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Invoice Paper -->
+    <div class="invoice-box max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border border-zinc-200 p-8 sm:p-12 relative overflow-hidden">
+        
+        <!-- Luxury Gold Accent Top Border -->
+        <div class="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-[#997839] via-[#c5a059] to-[#997839]"></div>
+
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between pb-8 border-b border-zinc-200 gap-6">
+            <div>
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-8 h-8 rounded-full border-2 border-[#c5a059] flex items-center justify-center bg-black text-[#c5a059] font-serif font-bold text-sm">
+                        R
+                    </div>
+                    <span class="font-serif text-2xl font-bold tracking-[0.2em] text-zinc-900">RANZZSTORE</span>
+                </div>
+                <p class="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Modern Luxury & Premium Lifestyle</p>
+                <div class="mt-3 text-xs text-zinc-500 space-y-0.5">
+                    <p>{{ settings.get('store_address', 'Senopati Suites Tower 2, Penthouse Level') }}</p>
+                    <p>Telepon: {{ settings.get('store_phone', '+62 812-8888-7799') }} | Email: {{ settings.get('store_email', 'concierge@ranzzstore.com') }}</p>
+                    <p>NPWP / VAT ID: 01.345.678.9-012.000</p>
+                </div>
+            </div>
+
+            <div class="text-left sm:text-right">
+                <span class="inline-block px-3 py-1 bg-zinc-100 text-zinc-700 font-mono text-xs font-bold rounded-lg border border-zinc-300">
+                    FAKTUR RESMI
+                </span>
+                <h2 class="font-mono text-xl font-bold text-zinc-900 mt-2">{{ order.order_number }}</h2>
+                <div class="mt-2 text-xs text-zinc-500 space-y-0.5">
+                    <p>Tanggal: <strong class="text-zinc-700">{{ order.created_at }}</strong></p>
+                    <p>Status Pembayaran: <strong class="{% if order.payment_status == 'paid' %}text-emerald-600{% else %}text-amber-600{% endif %} uppercase">{{ order.payment_status }}</strong></p>
+                    <p>Metode: <strong class="text-zinc-700">{{ order.payment_method }}</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Billed To & Shipping Info -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 py-6 border-b border-zinc-200 text-xs">
+            <div>
+                <p class="font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Tujuan Pengiriman & Penerima:</p>
+                <p class="font-bold text-sm text-zinc-900">{{ order.customer_name }}</p>
+                <p class="text-zinc-600 mt-1">{{ order.shipping_address }}</p>
+                <p class="text-zinc-600">{{ order.shipping_city }}, {{ order.shipping_postal_code }}</p>
+                <p class="text-zinc-600 mt-1">Telp / WA: {{ order.customer_phone }}</p>
+                <p class="text-zinc-600">Email: {{ order.customer_email }}</p>
+            </div>
+            <div class="sm:text-right">
+                <p class="font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Layanan Ekspedisi & Asuransi:</p>
+                <p class="font-bold text-sm text-zinc-900">{{ order.shipping_courier }}</p>
+                <p class="text-zinc-600 mt-1">Nomor Resi / AWB: <strong class="font-mono text-zinc-900">{{ order.tracking_number or 'DALAM PROSES BRANKAS' }}</strong></p>
+                {% if order.notes %}
+                <p class="text-zinc-500 mt-2 italic">Catatan Khusus: "{{ order.notes }}"</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Table of Items -->
+        <div class="py-6 border-b border-zinc-200">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="border-b border-zinc-200 text-zinc-400 font-bold uppercase tracking-wider">
+                        <th class="pb-3">Mahakarya / Deskripsi</th>
+                        <th class="pb-3 text-center">Edisi / Varian</th>
+                        <th class="pb-3 text-right">Harga Satuan</th>
+                        <th class="pb-3 text-center">Jumlah</th>
+                        <th class="pb-3 text-right">Total Sub</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-100">
+                    {% for it in items %}
+                    <tr>
+                        <td class="py-3 font-semibold text-zinc-900">{{ it.product_name }}</td>
+                        <td class="py-3 text-center text-zinc-500">{{ it.selected_variant or '-' }}</td>
+                        <td class="py-3 text-right text-zinc-700">{{ it.product_price | rupiah }}</td>
+                        <td class="py-3 text-center font-bold text-zinc-900">{{ it.quantity }}</td>
+                        <td class="py-3 text-right font-bold text-zinc-900">{{ it.subtotal | rupiah }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Calculations -->
+        <div class="pt-6 flex flex-col sm:flex-row justify-between items-start gap-6">
+            
+            <!-- QR Verification & Authentication Stamp -->
+            <div class="flex items-center gap-4">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=RANZZSTORE_VERIFIED_{{ order.order_number }}" alt="QR Verification" class="w-20 h-20 border border-zinc-200 p-1 rounded-lg">
+                <div class="text-[11px] text-zinc-500">
+                    <p class="font-bold text-zinc-800 uppercase tracking-wider">Keaslian Terverifikasi</p>
+                    <p>Faktur ini diterbitkan secara elektronik dan sah tanpa tanda tangan basah.</p>
+                    <p class="font-mono text-zinc-400 mt-1">SEC-KEY: 9812-7721-AX44</p>
+                </div>
+            </div>
+
+            <!-- Price Breakdown -->
+            <div class="w-full sm:w-72 space-y-2 text-xs">
+                <div class="flex justify-between text-zinc-600">
+                    <span>Subtotal:</span>
+                    <span class="font-semibold text-zinc-900">{{ order.subtotal | rupiah }}</span>
+                </div>
+                {% if order.discount_amount > 0 %}
+                <div class="flex justify-between text-emerald-600">
+                    <span>Diskon Kupon ({{ order.voucher_code }}):</span>
+                    <span>-{{ order.discount_amount | rupiah }}</span>
+                </div>
+                {% endif %}
+                <div class="flex justify-between text-zinc-600">
+                    <span>Ongkos Kirim & Brankas:</span>
+                    <span class="font-semibold text-zinc-900">{{ order.shipping_cost | rupiah }}</span>
+                </div>
+                <div class="pt-3 border-t border-zinc-200 flex justify-between items-baseline">
+                    <span class="font-bold text-sm text-zinc-900">Total Akhir:</span>
+                    <span class="font-serif text-xl font-bold text-zinc-900">{{ order.total | rupiah }}</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer Notice -->
+        <div class="mt-12 pt-6 border-t border-zinc-100 text-center text-[10px] text-zinc-400">
+            <p>Terima kasih atas kepercayaan Anda memilih Ranzzstore. Mahakarya ini disertai sertifikat garansi internasional resmi 5 tahun.</p>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

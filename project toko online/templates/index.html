@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+
+{% block title %}RANZZSTORE — Modern Luxury & Premium Lifestyle{% endblock %}
+
+{% block content %}
+<!-- HERO SECTION -->
+<section class="relative overflow-hidden pt-12 pb-24 md:pt-20 md:pb-32">
+    <!-- Atmospheric Ambient Lighting -->
+    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-[650px] h-[350px] bg-[#c5a059]/15 blur-[140px] pointer-events-none rounded-full"></div>
+    <div class="absolute -top-10 -left-10 w-96 h-96 bg-blue-900/10 blur-[120px] pointer-events-none rounded-full"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center max-w-3xl mx-auto space-y-6">
+            
+            <!-- Luxury Pill Tag -->
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-900/90 border border-[#c5a059]/40 text-zinc-300 text-xs tracking-widest uppercase">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#c5a059]"></i>
+                <span class="font-medium">Koleksi Musim 2026 Kini Tersedia</span>
+            </div>
+
+            <!-- Master Title -->
+            <h1 class="font-serif text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-zinc-100 leading-[1.15]">
+                Mahakarya Keanggunan <br>
+                <span class="text-gold-gradient italic">yang Abadi.</span>
+            </h1>
+
+            <!-- Subtitle -->
+            <p class="text-zinc-400 text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-light leading-relaxed">
+                Menghadirkan kurasi istimewa horologi berpresisi tinggi Swiss, kerajinan kulit murni asal Florence, serta keharuman eksklusif bertaraf dunia untuk jiwa yang menghargai kesempurnaan.
+            </p>
+
+            <!-- Action CTAs -->
+            <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="{{ url_for('shop') }}" class="w-full sm:w-auto px-8 py-4 text-xs font-semibold uppercase tracking-[0.15em] rounded-xl btn-gold flex items-center justify-center gap-2 shadow-xl">
+                    <span>Jelajahi Koleksi</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </a>
+                <a href="{{ url_for('track_order') }}" class="w-full sm:w-auto px-8 py-4 text-xs font-semibold uppercase tracking-[0.15em] rounded-xl btn-outline-gold flex items-center justify-center gap-2">
+                    <i data-lucide="truck" class="w-4 h-4 text-[#c5a059]"></i>
+                    <span>Lacak Pesanan</span>
+                </a>
+            </div>
+
+            <!-- Trust Metrics Bar -->
+            <div class="pt-12 grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-zinc-800/80 mt-12 text-left">
+                <div class="p-3">
+                    <p class="font-serif text-xl font-bold text-zinc-100">100% Asli</p>
+                    <p class="text-[11px] text-zinc-400">Sertifikat Autentikasi Resmi</p>
+                </div>
+                <div class="p-3">
+                    <p class="font-serif text-xl font-bold text-zinc-100">5 Tahun</p>
+                    <p class="text-[11px] text-zinc-400">Garansi Internasional Penuh</p>
+                </div>
+                <div class="p-3">
+                    <p class="font-serif text-xl font-bold text-zinc-100">Prioritas</p>
+                    <p class="text-[11px] text-zinc-400">Pengiriman Brankas Berasuransi</p>
+                </div>
+                <div class="p-3">
+                    <p class="font-serif text-xl font-bold text-zinc-100">Bespoke</p>
+                    <p class="text-[11px] text-zinc-400">Konsultasi Pribadi di Butik</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- CATEGORIES SHOWCASE -->
+<section class="py-16 bg-[#0e1117] border-y border-zinc-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-10">
+            <div>
+                <span class="text-xs uppercase tracking-[0.25em] text-[#c5a059] font-semibold">Kurasi Istimewa</span>
+                <h2 class="font-serif text-2xl sm:text-3xl font-bold text-zinc-100 mt-1">Kategori Mahakarya</h2>
+            </div>
+            <a href="{{ url_for('shop') }}" class="mt-4 md:mt-0 text-xs font-semibold tracking-wider text-[#c5a059] hover:underline flex items-center gap-1.5 uppercase">
+                <span>Lihat Seluruh Katalog</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {% for cat in categories %}
+            <a href="{{ url_for('shop', category=cat.slug) }}" class="group relative rounded-2xl overflow-hidden aspect-[4/5] border border-zinc-800 transition duration-300 hover:border-[#c5a059]/60 hover:shadow-2xl">
+                <!-- Image Background -->
+                <img src="{{ cat.image_url }}" alt="{{ cat.name }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-75 group-hover:opacity-90">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+                
+                <!-- Content Overlay -->
+                <div class="absolute bottom-0 inset-x-0 p-5">
+                    <div class="w-8 h-8 rounded-full bg-zinc-900/80 backdrop-blur-md border border-[#c5a059]/40 flex items-center justify-center text-[#c5a059] mb-3 group-hover:scale-110 transition">
+                        <i data-lucide="{{ cat.icon or 'sparkles' }}" class="w-4 h-4"></i>
+                    </div>
+                    <h3 class="font-serif text-base font-bold text-zinc-100 group-hover:text-[#c5a059] transition">{{ cat.name }}</h3>
+                    <p class="text-[11px] text-zinc-400 mt-1 flex items-center gap-1 group-hover:translate-x-1 transition duration-300">
+                        <span>Telusuri Koleksi</span>
+                        <i data-lucide="chevron-right" class="w-3 h-3 text-[#c5a059]"></i>
+                    </p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+    </div>
+</section>
+
+<!-- FEATURED PRODUCTS (MAHAKARYA UNGGULAN) -->
+<section class="py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center max-w-2xl mx-auto mb-14">
+            <span class="text-xs uppercase tracking-[0.25em] text-[#c5a059] font-semibold">Koleksi Terpilih</span>
+            <h2 class="font-serif text-3xl sm:text-4xl font-bold text-zinc-100 mt-2">Mahakarya Ikonik</h2>
+            <p class="text-xs sm:text-sm text-zinc-400 mt-3">Kombinasi presisi mekanikal dengan estetika kemewahan tingkat tinggi.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for p in featured %}
+            <div class="product-card glass-panel rounded-2xl overflow-hidden flex flex-col relative group">
+                
+                <!-- Badge -->
+                {% if p.badge %}
+                <div class="absolute top-3 left-3 z-20">
+                    <span class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md badge-gold">
+                        {{ p.badge }}
+                    </span>
+                </div>
+                {% endif %}
+
+                <!-- Wishlist Toggle Button -->
+                <button onclick="toggleWishlist({{ p.id }}, '{{ p.name }}')" data-product-id="{{ p.id }}" class="btn-wishlist absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-zinc-950/70 backdrop-blur-md border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-rose-500 transition">
+                    <i data-lucide="heart" class="w-4 h-4"></i>
+                </button>
+
+                <!-- Product Image -->
+                <a href="{{ url_for('product_detail', slug=p.slug) }}" class="relative block aspect-square overflow-hidden bg-zinc-950">
+                    <img src="{{ p.image_url }}" alt="{{ p.name }}" class="product-img-zoom w-full h-full object-cover">
+                </a>
+
+                <!-- Product Details -->
+                <div class="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                        <span class="text-[10px] uppercase tracking-widest text-[#c5a059] font-medium">{{ p.category_name }}</span>
+                        <a href="{{ url_for('product_detail', slug=p.slug) }}">
+                            <h3 class="font-serif text-sm font-bold text-zinc-100 hover:text-[#c5a059] transition line-clamp-2 mt-1">
+                                {{ p.name }}
+                            </h3>
+                        </a>
+                        
+                        <!-- Ratings -->
+                        <div class="flex items-center gap-1.5 mt-2">
+                            <div class="flex items-center text-[#c5a059]">
+                                {% for i in range(5) %}
+                                <i data-lucide="star" class="w-3 h-3 fill-current"></i>
+                                {% endfor %}
+                            </div>
+                            <span class="text-[11px] text-zinc-400">({{ p.reviews_count }})</span>
+                        </div>
+                    </div>
+
+                    <!-- Pricing & Quick Add -->
+                    <div class="pt-4 mt-4 border-t border-zinc-800/80 flex items-center justify-between">
+                        <div>
+                            <p class="font-semibold text-sm text-gold-gradient">{{ p.price | rupiah }}</p>
+                            {% if p.original_price and p.original_price > p.price %}
+                            <p class="text-[11px] text-zinc-500 line-through">{{ p.original_price | rupiah }}</p>
+                            {% endif %}
+                        </div>
+                        <button onclick="addToCart({{ p.id }}, 1)" class="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-700 hover:border-[#c5a059] hover:bg-[#c5a059] hover:text-black text-zinc-200 flex items-center justify-center transition duration-300" title="Tambah ke Tas Belanja">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+</section>
+
+<!-- CRAFTSMANSHIP & STORY HIGHLIGHT -->
+<section class="py-20 bg-gradient-to-b from-[#0b0d11] via-[#121620] to-[#0b0d11] border-y border-zinc-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            
+            <div class="space-y-6">
+                <span class="text-xs uppercase tracking-[0.3em] text-[#c5a059] font-bold">Dedikasi Pada Kualitas</span>
+                <h2 class="font-serif text-3xl sm:text-5xl font-bold text-zinc-100 leading-tight">
+                    Ketika Seni Bertemu <br>
+                    <span class="text-gold-gradient">Presisi Tanpa Batas.</span>
+                </h2>
+                <p class="text-zinc-400 text-sm sm:text-base leading-relaxed">
+                    Setiap arloji, tas kulit, dan wewangian dalam koleksi Ranzzstore melewati serangkaian uji kualitas yang ketat selama lebih dari 300 jam. Kami berkolaborasi langsung dengan para artisan maestro di Le Locle, Swiss dan Florence, Italia.
+                </p>
+
+                <div class="grid grid-cols-2 gap-4 pt-4">
+                    <div class="glass-panel p-4 rounded-xl border-l-2 border-l-[#c5a059]">
+                        <h4 class="font-serif text-base font-bold text-zinc-100">Bahan Baku Murni</h4>
+                        <p class="text-xs text-zinc-400 mt-1">Titanium Grade 5, kristal safir ganda, dan kulit nabati alami ramah lingkungan.</p>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl border-l-2 border-l-[#c5a059]">
+                        <h4 class="font-serif text-base font-bold text-zinc-100">Sertifikasi Legal</h4>
+                        <p class="text-xs text-zinc-400 mt-1">Setiap karya disertai nomor seri resmi berukir mikro dan sertifikat keaslian fisik.</p>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <a href="{{ url_for('shop') }}" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl btn-gold text-xs font-semibold uppercase tracking-wider">
+                        <span>Telusuri Kisah Kami</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="relative">
+                <div class="relative rounded-3xl overflow-hidden border border-[#c5a059]/30 shadow-2xl">
+                    <img src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=1000&auto=format&fit=crop" alt="Horology Craftsmanship" class="w-full h-[450px] object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                    <div class="absolute bottom-6 left-6 right-6 p-4 glass-panel-gold rounded-2xl">
+                        <p class="font-serif text-sm font-semibold text-zinc-100">Atelier Ranzzstore — SCBD Suites Jakarta</p>
+                        <p class="text-[11px] text-zinc-400">Pemberhentian eksklusif bagi kolektor dan penikmat seni horologi.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- RECENT / POPULAR ARRIVALS -->
+<section class="py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="flex items-end justify-between mb-12">
+            <div>
+                <span class="text-xs uppercase tracking-[0.25em] text-[#c5a059] font-semibold">Paling Diminati</span>
+                <h2 class="font-serif text-2xl sm:text-3xl font-bold text-zinc-100 mt-1">Koleksi Terpopuler & Baru</h2>
+            </div>
+            <a href="{{ url_for('shop') }}" class="hidden sm:flex items-center gap-1.5 text-xs font-semibold tracking-wider text-[#c5a059] hover:underline uppercase">
+                <span>Lihat Semua Produk</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for p in new_arrivals[:4] %}
+            <div class="product-card glass-panel rounded-2xl overflow-hidden flex flex-col relative group">
+                
+                {% if p.badge %}
+                <div class="absolute top-3 left-3 z-20">
+                    <span class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md {% if p.badge == 'Sale' %}badge-sale{% else %}badge-gold{% endif %}">
+                        {{ p.badge }}
+                    </span>
+                </div>
+                {% endif %}
+
+                <button onclick="toggleWishlist({{ p.id }}, '{{ p.name }}')" data-product-id="{{ p.id }}" class="btn-wishlist absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-zinc-950/70 backdrop-blur-md border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-rose-500 transition">
+                    <i data-lucide="heart" class="w-4 h-4"></i>
+                </button>
+
+                <a href="{{ url_for('product_detail', slug=p.slug) }}" class="relative block aspect-square overflow-hidden bg-zinc-950">
+                    <img src="{{ p.image_url }}" alt="{{ p.name }}" class="product-img-zoom w-full h-full object-cover">
+                </a>
+
+                <div class="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                        <span class="text-[10px] uppercase tracking-widest text-[#c5a059] font-medium">{{ p.category_name }}</span>
+                        <a href="{{ url_for('product_detail', slug=p.slug) }}">
+                            <h3 class="font-serif text-sm font-bold text-zinc-100 hover:text-[#c5a059] transition line-clamp-2 mt-1">
+                                {{ p.name }}
+                            </h3>
+                        </a>
+                        
+                        <div class="flex items-center gap-1.5 mt-2">
+                            <div class="flex items-center text-[#c5a059]">
+                                {% for i in range(5) %}
+                                <i data-lucide="star" class="w-3 h-3 fill-current"></i>
+                                {% endfor %}
+                            </div>
+                            <span class="text-[11px] text-zinc-400">({{ p.reviews_count }})</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 mt-4 border-t border-zinc-800/80 flex items-center justify-between">
+                        <div>
+                            <p class="font-semibold text-sm text-gold-gradient">{{ p.price | rupiah }}</p>
+                            {% if p.original_price and p.original_price > p.price %}
+                            <p class="text-[11px] text-zinc-500 line-through">{{ p.original_price | rupiah }}</p>
+                            {% endif %}
+                        </div>
+                        <button onclick="addToCart({{ p.id }}, 1)" class="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-700 hover:border-[#c5a059] hover:bg-[#c5a059] hover:text-black text-zinc-200 flex items-center justify-center transition duration-300">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+</section>
+
+<!-- VIP NEWSLETTER & PRIVATE CONCIERGE -->
+<section class="py-16 bg-[#0b0d11] border-t border-zinc-800/80">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+        <div class="w-12 h-12 rounded-full border border-[#c5a059] flex items-center justify-center mx-auto mb-4 bg-zinc-900">
+            <i data-lucide="crown" class="w-6 h-6 text-[#c5a059]"></i>
+        </div>
+        <h2 class="font-serif text-2xl sm:text-3xl font-bold text-zinc-100">Bergabung dengan Ranzzstore Privé</h2>
+        <p class="text-xs sm:text-sm text-zinc-400 mt-2 max-w-lg mx-auto">
+            Dapatkan undangan eksklusif rilis edisi terbatas, potongan privat hingga 20%, serta layanan pramutamu pribadi 24/7.
+        </p>
+
+        <form onsubmit="event.preventDefault(); showToast('Terima kasih! Anda telah terdaftar di Ranzzstore Privé.', 'success'); this.reset();" class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
+            <input type="email" required placeholder="Masukkan alamat email resmi Anda..." class="w-full px-4 py-3 text-xs bg-zinc-900 border border-zinc-700 rounded-xl text-zinc-200 focus:outline-none focus:border-[#c5a059]">
+            <button type="submit" class="w-full sm:w-auto px-6 py-3 rounded-xl btn-gold text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
+                Daftar VIP
+            </button>
+        </form>
+    </div>
+</section>
+{% endblock %}

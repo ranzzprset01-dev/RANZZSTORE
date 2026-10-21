@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Pendaftaran Akun Eksklusif — RANZZSTORE{% endblock %}
+
+{% block content %}
+<div class="min-h-[75vh] flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+        
+        <div class="glass-panel-gold rounded-3xl p-8 border border-[#c5a059]/40 shadow-2xl space-y-6">
+            
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 rounded-full border border-[#c5a059] flex items-center justify-center mx-auto bg-black text-[#c5a059] font-serif font-bold text-lg">
+                    R
+                </div>
+                <h1 class="font-serif text-2xl font-bold text-zinc-100">Registrasi Anggota Baru</h1>
+                <p class="text-xs text-zinc-400">Dapatkan akses ke koleksi privat dan penawaran istimewa.</p>
+            </div>
+
+            <form action="{{ url_for('register') }}" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-zinc-400 mb-1">Nama Lengkap</label>
+                    <input type="text" name="name" required placeholder="Contoh: Alexander Vance" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-zinc-400 mb-1">Alamat Email</label>
+                    <input type="email" name="email" required placeholder="nama@domain.com" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-zinc-400 mb-1">Nomor WhatsApp Aktif</label>
+                    <input type="tel" name="phone" placeholder="08123456789" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-zinc-400 mb-1">Kata Sandi</label>
+                        <input type="password" name="password" required placeholder="••••••••" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-zinc-400 mb-1">Ulangi Sandi</label>
+                        <input type="password" name="confirm_password" required placeholder="••••••••" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 rounded-xl btn-gold text-xs font-semibold uppercase tracking-wider shadow-lg">
+                    Daftar Sebagai Anggota
+                </button>
+            </form>
+
+            <p class="text-center text-xs text-zinc-400 pt-2">
+                Sudah memiliki akun? 
+                <a href="{{ url_for('login') }}" class="text-[#c5a059] hover:underline font-semibold">Masuk di sini</a>
+            </p>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

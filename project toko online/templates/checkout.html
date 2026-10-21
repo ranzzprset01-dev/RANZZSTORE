@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+
+{% block title %}Penyelesaian Pesanan Mewah — RANZZSTORE{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    
+    <div class="mb-8">
+        <h1 class="font-serif text-3xl font-bold text-zinc-100">Penyelesaian Pesanan</h1>
+        <p class="text-xs sm:text-sm text-zinc-400 mt-1">Layanan pengiriman berasuransi tinggi langsung ke kediaman Anda.</p>
+    </div>
+
+    <form id="checkout-form" onsubmit="handleCheckoutSubmit(event)">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
+            
+            <!-- Left 2 Cols: Form Sections -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Section 1: Informasi Kontak & Penerima -->
+                <div class="glass-panel p-6 rounded-2xl border border-zinc-800 space-y-4">
+                    <div class="flex items-center gap-2 pb-3 border-b border-zinc-800">
+                        <div class="w-6 h-6 rounded-full bg-[#c5a059] text-black font-bold text-xs flex items-center justify-center">1</div>
+                        <h3 class="font-serif text-base font-bold text-zinc-100 uppercase tracking-wider">Data Pribadi & Alamat Pengiriman</h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-zinc-400 mb-1">Nama Lengkap Penerima *</label>
+                            <input type="text" id="cust-name" required value="{{ current_user.name if current_user else '' }}" placeholder="Nama sesuai KTP/ID" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059]">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-zinc-400 mb-1">Nomor WhatsApp Aktif *</label>
+                            <input type="tel" id="cust-phone" required value="{{ current_user.phone if current_user else '' }}" placeholder="Contoh: 081234567890" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059]">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-zinc-400 mb-1">Alamat Email *</label>
+                        <input type="email" id="cust-email" required value="{{ current_user.email if current_user else '' }}" placeholder="invoice@domain.com" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059]">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-zinc-400 mb-1">Alamat Lengkap (Gedung, Jalan, No. Rumah) *</label>
+                        <textarea id="cust-address" required rows="2" placeholder="Jl. Senopati No. 88, Apartemen Residence Tower A Lt 15" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059]">{{ current_user.address if current_user else '' }}</textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-zinc-400 mb-1">Kota / Kabupaten *</label>
+                            <input type="text" id="cust-city" required value="Jakarta Selatan" placeholder="Kota" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059]">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-zinc-400 mb-1">Kode Pos *</label>
+                            <input type="text" id="cust-postal" required value="12190" placeholder="12190" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059]">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Layanan Kurir & Ekspedisi -->
+                <div class="glass-panel p-6 rounded-2xl border border-zinc-800 space-y-4">
+                    <div class="flex items-center gap-2 pb-3 border-b border-zinc-800">
+                        <div class="w-6 h-6 rounded-full bg-[#c5a059] text-black font-bold text-xs flex items-center justify-center">2</div>
+                        <h3 class="font-serif text-base font-bold text-zinc-100 uppercase tracking-wider">Layanan Ekspedisi Berasuransi</h3>
+                    </div>
+
+                    <div class="space-y-3" id="courier-selector">
+                        {% for c in couriers %}
+                        <label class="courier-card flex items-center justify-between p-4 rounded-xl border cursor-pointer transition {% if loop.first %}border-[#c5a059] bg-[#c5a059]/10{% else %}border-zinc-800 bg-zinc-900/60 hover:border-zinc-700{% endif %}">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="courier" value="{{ c.cost }}" data-name="{{ c.name }}" {% if loop.first %}checked{% endif %} onchange="updateShipping(this)" class="accent-[#c5a059]">
+                                <div>
+                                    <p class="text-xs font-semibold text-zinc-100">{{ c.name }}</p>
+                                    <p class="text-[11px] text-zinc-400">Estimasi Tiba: {{ c.etd }}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold text-gold-gradient">{{ c.cost | rupiah }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Section 3: Metode Pembayaran -->
+                <div class="glass-panel p-6 rounded-2xl border border-zinc-800 space-y-4">
+                    <div class="flex items-center gap-2 pb-3 border-b border-zinc-800">
+                        <div class="w-6 h-6 rounded-full bg-[#c5a059] text-black font-bold text-xs flex items-center justify-center">3</div>
+                        <h3 class="font-serif text-base font-bold text-zinc-100 uppercase tracking-wider">Metode Pembayaran Resmi</h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="payment-methods">
+                        <label class="pay-option flex items-center gap-3 p-4 rounded-xl border border-[#c5a059] bg-[#c5a059]/10 cursor-pointer transition">
+                            <input type="radio" name="payment_method" value="QRIS" checked onchange="highlightPayment(this)" class="accent-[#c5a059]">
+                            <div>
+                                <p class="text-xs font-bold text-zinc-100">QRIS Instant Pay</p>
+                                <p class="text-[10px] text-zinc-400">Scan via GoPay, OVO, BCA, Dana</p>
+                            </div>
+                        </label>
+
+                        <label class="pay-option flex items-center gap-3 p-4 rounded-xl border border-zinc-800 bg-zinc-900/60 cursor-pointer transition hover:border-zinc-700">
+                            <input type="radio" name="payment_method" value="BCA_VA" onchange="highlightPayment(this)" class="accent-[#c5a059]">
+                            <div>
+                                <p class="text-xs font-bold text-zinc-100">BCA Virtual Account</p>
+                                <p class="text-[10px] text-zinc-400">Verifikasi Otomatis 24 Jam</p>
+                            </div>
+                        </label>
+
+                        <label class="pay-option flex items-center gap-3 p-4 rounded-xl border border-zinc-800 bg-zinc-900/60 cursor-pointer transition hover:border-zinc-700">
+                            <input type="radio" name="payment_method" value="MANDIRI_VA" onchange="highlightPayment(this)" class="accent-[#c5a059]">
+                            <div>
+                                <p class="text-xs font-bold text-zinc-100">Mandiri Virtual Account</p>
+                                <p class="text-[10px] text-zinc-400">Livin' by Mandiri & ATM</p>
+                            </div>
+                        </label>
+
+                        <label class="pay-option flex items-center gap-3 p-4 rounded-xl border border-zinc-800 bg-zinc-900/60 cursor-pointer transition hover:border-zinc-700">
+                            <input type="radio" name="payment_method" value="CREDIT_CARD" onchange="highlightPayment(this)" class="accent-[#c5a059]">
+                            <div>
+                                <p class="text-xs font-bold text-zinc-100">Kartu Kredit Visa / Master</p>
+                                <p class="text-[10px] text-zinc-400">3D Secure 256-bit Protection</p>
+                            </div>
+                        </label>
+
+                        <label class="pay-option flex items-center gap-3 p-4 rounded-xl border border-zinc-800 bg-zinc-900/60 cursor-pointer transition hover:border-zinc-700 sm:col-span-2">
+                            <input type="radio" name="payment_method" value="COD" onchange="highlightPayment(this)" class="accent-[#c5a059]">
+                            <div>
+                                <p class="text-xs font-bold text-zinc-100">COD (Bayar di Tempat Khusus Kurir Butik)</p>
+                                <p class="text-[10px] text-zinc-400">Khusus area Jabodetabek dengan konfirmasi petugas</p>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Notes / Permintaan Khusus -->
+                    <div class="pt-2">
+                        <label class="block text-xs text-zinc-400 mb-1">Catatan Tambahan untuk Concierge Butik (Opsional)</label>
+                        <input type="text" id="cust-notes" placeholder="Contoh: Tolong sertakan kartu ucapan selamat ulang tahun..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-[#c5a059]">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Col: Order Summary & Trigger -->
+            <div class="space-y-6 sticky top-28">
+                <div class="glass-panel-gold rounded-2xl p-6 space-y-5 shadow-2xl">
+                    <h3 class="font-serif text-base font-bold text-zinc-100 uppercase tracking-wider pb-3 border-b border-zinc-800">
+                        Mahakarya yang Dipesan
+                    </h3>
+
+                    <!-- Mini items list -->
+                    <div class="space-y-3 max-h-64 overflow-y-auto pr-1">
+                        {% for item in cart_items %}
+                        <div class="flex items-center gap-3 py-1">
+                            <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}" class="w-12 h-12 object-cover rounded-lg border border-zinc-800 flex-shrink-0">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-medium text-zinc-200 truncate">{{ item.product.name }}</p>
+                                {% if item.variant %}
+                                <p class="text-[10px] text-[#c5a059]">{{ item.variant }}</p>
+                                {% endif %}
+                                <p class="text-[10px] text-zinc-400">{{ item.quantity }} × {{ item.product.price | rupiah }}</p>
+                            </div>
+                            <span class="text-xs font-bold text-zinc-100">{{ item.subtotal | rupiah }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Price Calculations -->
+                    <div class="pt-4 border-t border-zinc-800 space-y-2.5 text-xs">
+                        <div class="flex justify-between text-zinc-400">
+                            <span>Subtotal Produk:</span>
+                            <span class="text-zinc-200 font-semibold">{{ subtotal | rupiah }}</span>
+                        </div>
+
+                        {% if discount_amount > 0 %}
+                        <div class="flex justify-between text-rose-400">
+                            <span>Potongan Voucher:</span>
+                            <span>-{{ discount_amount | rupiah }}</span>
+                        </div>
+                        {% endif %}
+
+                        <div class="flex justify-between text-zinc-400">
+                            <span>Ongkos Kirim & Asuransi:</span>
+                            <span id="summary-shipping" class="text-zinc-200 font-semibold">{{ couriers[0].cost | rupiah }}</span>
+                        </div>
+
+                        <div class="pt-3 border-t border-zinc-800 flex justify-between items-baseline">
+                            <span class="font-serif text-sm font-bold text-zinc-100">Total Pembayaran:</span>
+                            <span id="summary-grand-total" class="font-serif text-xl font-bold text-gold-gradient">
+                                {{ (subtotal - discount_amount + couriers[0].cost) | rupiah }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-submit-order" class="w-full py-4 text-xs font-bold uppercase tracking-[0.15em] rounded-xl btn-gold flex items-center justify-center gap-2 shadow-2xl">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i>
+                        <span>Konfirmasi & Bayar Sekarang</span>
+                    </button>
+
+                    <p class="text-[10px] text-center text-zinc-400">
+                        Dengan menekan tombol di atas, Anda menyetujui syarat & ketentuan transaksi resmi Ranzzstore.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </form>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const subtotal = {{ subtotal }};
+    const discount = {{ discount_amount }};
+    let currentShippingCost = {{ couriers[0].cost }};
+    let currentCourierName = '{{ couriers[0].name }}';
+
+    function updateShipping(radio) {
+        currentShippingCost = parseFloat(radio.value);
+        currentCourierName = radio.dataset.name;
+
+        // Visual update
+        document.querySelectorAll('.courier-card').forEach(card => {
+            card.classList.remove('border-[#c5a059]', 'bg-[#c5a059]/10');
+            card.classList.add('border-zinc-800', 'bg-zinc-900/60');
+        });
+        radio.closest('.courier-card').classList.remove('border-zinc-800', 'bg-zinc-900/60');
+        radio.closest('.courier-card').classList.add('border-[#c5a059]', 'bg-[#c5a059]/10');
+
+        document.getElementById('summary-shipping').innerText = formatRupiah(currentShippingCost);
+        const grandTotal = Math.max(0, subtotal - discount) + currentShippingCost;
+        document.getElementById('summary-grand-total').innerText = formatRupiah(grandTotal);
+    }
+
+    function highlightPayment(radio) {
+        document.querySelectorAll('.pay-option').forEach(opt => {
+            opt.classList.remove('border-[#c5a059]', 'bg-[#c5a059]/10');
+            opt.classList.add('border-zinc-800', 'bg-zinc-900/60');
+        });
+        radio.closest('.pay-option').classList.remove('border-zinc-800', 'bg-zinc-900/60');
+        radio.closest('.pay-option').classList.add('border-[#c5a059]', 'bg-[#c5a059]/10');
+    }
+
+    async function handleCheckoutSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btn-submit-order');
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Memproses Transaksi...</span>`;
+        if (window.lucide) lucide.createIcons();
+
+        const selectedPay = document.querySelector('input[name="payment_method"]:checked')?.value || 'QRIS';
+
+        const payload = {
+            customer_name: document.getElementById('cust-name').value,
+            customer_email: document.getElementById('cust-email').value,
+            customer_phone: document.getElementById('cust-phone').value,
+            shipping_address: document.getElementById('cust-address').value,
+            shipping_city: document.getElementById('cust-city').value,
+            shipping_postal_code: document.getElementById('cust-postal').value,
+            shipping_courier: currentCourierName,
+            shipping_cost: currentShippingCost,
+            payment_method: selectedPay,
+            notes: document.getElementById('cust-notes').value
+        };
+
+        try {
+            const res = await fetch('/api/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Pesanan berhasil dibuat!', 'success');
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 800);
+            } else {
+                showToast(data.message || 'Gagal memproses pesanan', 'error');
+                btn.disabled = false;
+                btn.innerHTML = `<span>Konfirmasi & Bayar Sekarang</span>`;
+            }
+        } catch (err) {
+            showToast('Kesalahan koneksi ke server.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = `<span>Konfirmasi & Bayar Sekarang</span>`;
+        }
+    }
+</script>
+{% endblock %}

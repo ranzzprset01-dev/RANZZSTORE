@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Impian & Mahakarya Favorit — RANZZSTORE{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    
+    <div class="mb-8">
+        <h1 class="font-serif text-3xl font-bold text-zinc-100">Daftar Impian Pribadi</h1>
+        <p class="text-xs sm:text-sm text-zinc-400 mt-1">Koleksi mahakarya yang telah Anda simpan untuk momen istimewa berikutnya.</p>
+    </div>
+
+    <!-- Wishlist Container -->
+    <div id="wishlist-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Dynamically rendered by JavaScript -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="wishlist-empty" class="hidden glass-panel text-center py-20 px-4 rounded-3xl border border-zinc-800 max-w-xl mx-auto">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500">
+            <i data-lucide="heart" class="w-8 h-8"></i>
+        </div>
+        <h3 class="font-serif text-2xl font-bold text-zinc-200 mb-2">Daftar Impian Anda Masih Kosong</h3>
+        <p class="text-xs text-zinc-400 max-w-sm mx-auto mb-8">Tandai mahakarya favorit Anda dengan menekan ikon hati pada katalog produk.</p>
+        <a href="{{ url_for('shop') }}" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl btn-gold text-xs font-semibold uppercase tracking-wider">
+            <span>Jelajahi Koleksi</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    async function loadWishlistItems() {
+        const container = document.getElementById('wishlist-container');
+        const emptyState = document.getElementById('wishlist-empty');
+        const ids = getWishlist();
+
+        if (ids.length === 0) {
+            container.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            // Fetch all shop products to filter matching wishlist IDs
+            const res = await fetch('/shop');
+            const html = await res.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const allCards = doc.querySelectorAll('.product-card');
+
+            let matched = 0;
+            container.innerHTML = '';
+
+            allCards.forEach(card => {
+                const btnWish = card.querySelector('.btn-wishlist');
+                if (btnWish) {
+                    const pid = parseInt(btnWish.dataset.productId);
+                    if (ids.includes(pid)) {
+                        matched++;
+                        container.appendChild(card.cloneNode(true));
+                    }
+                }
+            });
+
+            if (matched === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            if (window.lucide) lucide.createIcons();
+            updateWishlistBadge();
+        } catch (e) {
+            emptyState.classList.remove('hidden');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadWishlistItems);
+</script>
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}Kupon & Voucher Promosi — Admin Suite{% endblock %}
+{% block header_title %}Manajemen Voucher Diskon & Promosi{% endblock %}
+
+{% block admin_content %}
+<div class="space-y-6">
+    
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="font-serif text-lg font-bold text-zinc-100">Kupon Diskon Butik</h2>
+            <p class="text-xs text-zinc-400">Atur strategi promosi dan potongan harga bagi pelanggan VIP.</p>
+        </div>
+
+        <button onclick="document.getElementById('modal-add-voucher').classList.remove('hidden')" class="px-4 py-2 rounded-xl btn-gold text-xs font-semibold flex items-center gap-2 shadow-lg">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Buat Kupon Baru</span>
+        </button>
+    </div>
+
+    <!-- Vouchers Table -->
+    <div class="glass-panel rounded-2xl border border-zinc-800 p-6 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="border-b border-zinc-800 text-zinc-400 uppercase font-bold tracking-wider">
+                        <th class="pb-3">Kode Kupon</th>
+                        <th class="pb-3">Tipe & Nilai Diskon</th>
+                        <th class="pb-3">Min. Belanja</th>
+                        <th class="pb-3">Maks. Potongan</th>
+                        <th class="pb-3 text-center">Penggunaan</th>
+                        <th class="pb-3 text-center">Status</th>
+                        <th class="pb-3 text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-800/60">
+                    {% for v in vouchers %}
+                    <tr class="hover:bg-zinc-800/30 transition">
+                        
+                        <td class="py-4">
+                            <span class="font-mono font-bold text-sm tracking-wider px-3 py-1 rounded-lg bg-zinc-900 border border-[#c5a059]/40 text-[#c5a059]">
+                                {{ v.code }}
+                            </span>
+                        </td>
+
+                        <td class="py-4">
+                            {% if v.discount_type == 'percent' %}
+                            <p class="font-bold text-zinc-100">{{ v.discount_value }}% Diskon</p>
+                            <p class="text-[10px] text-zinc-400">Persentase dari subtotal</p>
+                            {% else %}
+                            <p class="font-bold text-zinc-100">{{ v.discount_value | rupiah }}</p>
+                            <p class="text-[10px] text-zinc-400">Potongan langsung nominal</p>
+                            {% endif %}
+                        </td>
+
+                        <td class="py-4 text-zinc-300">
+                            {{ v.min_spend | rupiah }}
+                        </td>
+
+                        <td class="py-4 text-zinc-300">
+                            {% if v.max_discount > 0 %}
+                            {{ v.max_discount | rupiah }}
+                            {% else %}
+                            <span class="text-zinc-500">Tanpa Batas</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="py-4 text-center font-mono">
+                            <span class="text-zinc-200 font-semibold">{{ v.used_count }}</span>
+                            <span class="text-zinc-500">/ {{ v.usage_limit }}</span>
+                        </td>
+
+                        <td class="py-4 text-center">
+                            <form action="{{ url_for('admin_toggle_voucher', voucher_id=v.id) }}" method="POST">
+                                <button type="submit" class="px-2.5 py-1 text-[10px] font-bold rounded-full uppercase transition {% if v.is_active %}bg-emerald-950/60 text-emerald-400 border border-emerald-800{% else %}bg-zinc-800 text-zinc-400 border border-zinc-700{% endif %}" title="Klik untuk ubah status">
+                                    {% if v.is_active %}Aktif{% else %}Nonaktif{% endif %}
+                                </button>
+                            </form>
+                        </td>
+
+                        <td class="py-4 text-right">
+                            <form action="{{ url_for('admin_delete_voucher', voucher_id=v.id) }}" method="POST" onsubmit="return confirm('Hapus voucher {{ v.code }}?')">
+                                <button type="submit" class="p-2 rounded-lg bg-zinc-800 hover:bg-rose-900/60 text-zinc-400 hover:text-rose-400 transition" title="Hapus Voucher">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </form>
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODAL: ADD VOUCHER -->
+<div id="modal-add-voucher" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="glass-panel-gold rounded-3xl p-6 sm:p-8 border border-[#c5a059]/40 w-full max-w-lg space-y-6">
+        
+        <div class="flex items-center justify-between pb-4 border-b border-zinc-800">
+            <h3 class="font-serif text-lg font-bold text-zinc-100">Buat Kupon Promosi Baru</h3>
+            <button onclick="document.getElementById('modal-add-voucher').classList.add('hidden')" class="p-1 text-zinc-400 hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form action="{{ url_for('admin_add_voucher') }}" method="POST" class="space-y-4 text-xs">
+            <div>
+                <label class="block text-zinc-400 mb-1">Kode Kupon *</label>
+                <input type="text" name="code" required placeholder="Contoh: LUXE2026" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059] uppercase tracking-wider font-mono">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-zinc-400 mb-1">Tipe Diskon *</label>
+                    <select name="discount_type" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                        <option value="percent">Persentase (%)</option>
+                        <option value="fixed">Nominal Tetap (Rp)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-zinc-400 mb-1">Nilai Potongan *</label>
+                    <input type="number" step="any" name="discount_value" required placeholder="10 (untuk 10%) atau 50000" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-zinc-400 mb-1">Min. Belanja (IDR)</label>
+                    <input type="number" name="min_spend" value="500000" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+                <div>
+                    <label class="block text-zinc-400 mb-1">Maks. Potongan (IDR)</label>
+                    <input type="number" name="max_discount" value="200000" placeholder="0 jika tanpa batas" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-zinc-400 mb-1">Batas Kuota Penggunaan</label>
+                    <input type="number" name="usage_limit" value="100" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+                <div>
+                    <label class="block text-zinc-400 mb-1">Tanggal Kedaluwarsa</label>
+                    <input type="date" name="expires_at" value="2027-12-31" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-[#c5a059]">
+                </div>
+            </div>
+
+            <div class="pt-4 flex justify-end gap-3">
+                <button type="button" onclick="document.getElementById('modal-add-voucher').classList.add('hidden')" class="px-5 py-2.5 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+                    Batal
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-xl btn-gold font-semibold uppercase tracking-wider">
+                    Simpan Kupon
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}
